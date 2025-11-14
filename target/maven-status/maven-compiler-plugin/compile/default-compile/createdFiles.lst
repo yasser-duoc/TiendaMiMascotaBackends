@@ -1,0 +1,6 @@
+com\tiendamascota\repository\ProductoRepository.class
+com\tiendamascota\TiendaMascotaApplication.class
+com\tiendamascota\controller\ProductoController.class
+com\tiendamascota\config\CorsConfig.class
+com\tiendamascota\model\Producto.class
+com\tiendamascota\config\DataInitializer.class
