@@ -2,6 +2,8 @@ package com.tiendamascota.controller;
 
 import com.tiendamascota.model.Producto;
 import com.tiendamascota.repository.ProductoRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,40 +14,41 @@ import java.util.List;
 @RestController
 @RequestMapping("/productos")
 @CrossOrigin(origins = "*")
+@Tag(name = "Productos", description = "API de gestión de productos")
 public class ProductoController {
     
     @Autowired
     private ProductoRepository productoRepository;
     
-    // GET todos los productos
     @GetMapping
+    @Operation(summary = "Obtener todos los productos", description = "Retorna una lista de todos los productos disponibles")
     public ResponseEntity<List<Producto>> obtenerTodos() {
         return ResponseEntity.ok(productoRepository.findAll());
     }
     
-    // GET producto por ID
     @GetMapping("/{id}")
+    @Operation(summary = "Obtener producto por ID", description = "Retorna un producto específico por su ID")
     public ResponseEntity<Producto> obtenerPorId(@PathVariable Integer id) {
         return productoRepository.findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
     
-    // GET productos por categoría
     @GetMapping("/categoria/{categoria}")
+    @Operation(summary = "Obtener productos por categoría", description = "Retorna todos los productos de una categoría específica")
     public ResponseEntity<List<Producto>> obtenerPorCategoria(@PathVariable String categoria) {
         return ResponseEntity.ok(productoRepository.findByCategoria(categoria));
     }
     
-    // POST crear producto
     @PostMapping
+    @Operation(summary = "Crear nuevo producto", description = "Crea un nuevo producto en la base de datos")
     public ResponseEntity<Producto> crear(@RequestBody Producto producto) {
         Producto nuevo = productoRepository.save(producto);
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevo);
     }
     
-    // PUT actualizar producto
     @PutMapping("/{id}")
+    @Operation(summary = "Actualizar producto", description = "Actualiza un producto existente")
     public ResponseEntity<Producto> actualizar(@PathVariable Integer id, @RequestBody Producto productoActualizado) {
         return productoRepository.findById(id)
                 .map(producto -> {
@@ -61,8 +64,8 @@ public class ProductoController {
                 .orElse(ResponseEntity.notFound().build());
     }
     
-    // DELETE eliminar producto
     @DeleteMapping("/{id}")
+    @Operation(summary = "Eliminar producto", description = "Elimina un producto de la base de datos")
     public ResponseEntity<Void> eliminar(@PathVariable Integer id) {
         if (productoRepository.existsById(id)) {
             productoRepository.deleteById(id);
