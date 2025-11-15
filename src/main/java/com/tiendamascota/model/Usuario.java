@@ -1,10 +1,16 @@
 package com.tiendamascota.model;
 
-import jakarta.persistence.*;
+import java.time.LocalDateTime;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "usuarios")
@@ -29,6 +35,9 @@ public class Usuario {
     private String telefono;
     private String direccion;
     private String run;
+    
+    @Column(nullable = false)
+    private String rol = "cliente";
     
     @Column(nullable = false, updatable = false)
     private LocalDateTime fecha_creacion = LocalDateTime.now();
@@ -88,6 +97,14 @@ public class Usuario {
 
     public void setRun(String run) {
         this.run = run;
+    }
+    
+    public String getRol() {
+        return rol;
+    }
+    
+    public void setRol(String rol) {
+        this.rol = rol;
     }
 
     public LocalDateTime getFecha_creacion() {

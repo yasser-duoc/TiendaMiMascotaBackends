@@ -1,8 +1,13 @@
 package com.tiendamascota.controller;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -13,10 +18,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.tiendamascota.dto.VerificarStockRequest;
+import com.tiendamascota.dto.VerificarStockResponse;
 import com.tiendamascota.model.Producto;
 import com.tiendamascota.repository.ProductoRepository;
+import com.tiendamascota.service.OrdenService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -30,18 +39,52 @@ public class ProductoController {
     @Autowired
     private ProductoRepository productoRepository;
     
+    @Autowired
+    private OrdenService ordenService;
+    
     @GetMapping
-    @Operation(summary = "Obtener todos los productos", description = "Retorna una lista de todos los productos disponibles")
-    public ResponseEntity<List<Producto>> obtenerTodos() {
-        return ResponseEntity.ok(productoRepository.findAll());
+    @Operation(summary = "Obtener todos los productos con paginación", description = "Retorna una lista paginada de productos")
+    public ResponseEntity<?> obtenerTodos(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        try {
+            Pageable pageable = PageRequest.of(page, size);
+            Page<Producto> productosPage = productoRepository.findAll(pageable);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("productos", productosPage.getContent());
+            response.put("currentPage", productosPage.getNumber());
+            response.put("totalItems", productosPage.getTotalElements());
+            response.put("totalPages", productosPage.getTotalPages());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            // Fallback: retornar todos sin paginación
+            return ResponseEntity.ok(productoRepository.findAll());
+        }
     }
     
     @GetMapping("/{id}")
     @Operation(summary = "Obtener producto por ID", description = "Retorna un producto específico por su ID")
-    public ResponseEntity<Producto> obtenerPorId(@PathVariable Integer id) {
-        return productoRepository.findById(java.util.Objects.requireNonNull(id))
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<?> obtenerPorId(@PathVariable Integer id) {
+        try {
+            var producto = productoRepository.findById(java.util.Objects.requireNonNull(id));
+            
+            if (producto.isPresent()) {
+                return ResponseEntity.ok(producto.get());
+            } else {
+                Map<String, Object> error = new HashMap<>();
+                error.put("mensaje", "Producto no encontrado con ID: " + id);
+                error.put("status", HttpStatus.NOT_FOUND.value());
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+            }
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("mensaje", "Error al obtener el producto: " + e.getMessage());
+            error.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
     }
     
     @GetMapping("/categoria/{categoria}")
@@ -83,5 +126,19 @@ public class ProductoController {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.notFound().build();
+    }
+    
+    @PostMapping("/verificar-stock")
+    @Operation(summary = "Verificar stock de productos", description = "Verifica si hay stock disponible para una lista de productos")
+    public ResponseEntity<?> verificarStock(@RequestBody VerificarStockRequest request) {
+        try {
+            VerificarStockResponse response = ordenService.verificarStock(request);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("mensaje", "Error al verificar stock: " + e.getMessage());
+            error.put("disponible", false);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        }
     }
 }

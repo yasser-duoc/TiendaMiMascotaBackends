@@ -1,14 +1,18 @@
 package com.tiendamascota.service;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
 import com.tiendamascota.dto.AuthResponse;
 import com.tiendamascota.dto.LoginRequest;
 import com.tiendamascota.dto.RegistroRequest;
 import com.tiendamascota.model.Usuario;
 import com.tiendamascota.repository.UsuarioRepository;
 import com.tiendamascota.security.JwtUtil;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
 
 @Service
 public class AuthService {
@@ -33,7 +37,12 @@ public class AuthService {
             throw new Exception("Contraseña incorrecta");
         }
         
-        String token = jwtUtil.generateToken(usuario.getEmail(), usuario.getUsuario_id());
+        String token = jwtUtil.generateToken(
+            usuario.getEmail(), 
+            usuario.getUsuario_id(),
+            usuario.getNombre(),
+            usuario.getRol()
+        );
         
         return new AuthResponse(
                 token,
@@ -62,10 +71,16 @@ public class AuthService {
         usuario.setTelefono(request.getTelefono());
         usuario.setDireccion(request.getDireccion());
         usuario.setRun(request.getRun());
+        usuario.setRol("cliente"); // Rol por defecto
         
         usuario = usuarioRepository.save(usuario);
         
-        String token = jwtUtil.generateToken(usuario.getEmail(), usuario.getUsuario_id());
+        String token = jwtUtil.generateToken(
+            usuario.getEmail(),
+            usuario.getUsuario_id(),
+            usuario.getNombre(),
+            usuario.getRol()
+        );
         
         return new AuthResponse(
                 token,
@@ -77,5 +92,32 @@ public class AuthService {
                 usuario.getRun(),
                 "Usuario registrado exitosamente"
         );
+    }
+    
+    /**
+     * Verificar token JWT y retornar datos del usuario
+     */
+    public Map<String, Object> verificarToken(String token) throws Exception {
+        if (!jwtUtil.validateToken(token)) {
+            throw new Exception("Token inválido o expirado");
+        }
+        
+        Integer usuarioId = jwtUtil.getUserIdFromToken(token);
+        if (usuarioId == null) {
+            throw new Exception("Token no contiene usuario_id válido");
+        }
+        
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new Exception("Usuario no encontrado"));
+        
+        Map<String, Object> userData = new HashMap<>();
+        userData.put("usuario_id", usuario.getUsuario_id());
+        userData.put("nombre", usuario.getNombre());
+        userData.put("email", usuario.getEmail());
+        userData.put("telefono", usuario.getTelefono());
+        userData.put("direccion", usuario.getDireccion());
+        userData.put("rol", usuario.getRol());
+        
+        return userData;
     }
 }

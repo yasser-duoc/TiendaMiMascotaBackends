@@ -16,24 +16,34 @@ public class JwtUtil {
     @Value("${jwt.secret:mi-secreto-super-seguro-para-tienda-mascota-2025}")
     private String jwtSecret;
     
-    @Value("${jwt.expiration:86400000}") // 24 horas en milisegundos
-    private int jwtExpiration;
+    @Value("${jwt.expiration:604800000}") // 7 días en milisegundos
+    private long jwtExpiration;
     
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(jwtSecret.getBytes());
     }
     
     /**
-     * Genera un JWT token
+     * Genera un JWT token con todos los claims
      */
-    public String generateToken(String email, Integer usuarioId) {
+    public String generateToken(String email, Integer usuarioId, String nombre, String rol) {
         return Jwts.builder()
                 .subject(email)
-                .claim("usuarioId", usuarioId)
+                .claim("usuario_id", usuarioId)
+                .claim("email", email)
+                .claim("nombre", nombre)
+                .claim("rol", rol)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
                 .signWith(getSigningKey())
                 .compact();
+    }
+    
+    /**
+     * Genera un JWT token (versión simplificada para compatibilidad)
+     */
+    public String generateToken(String email, Integer usuarioId) {
+        return generateToken(email, usuarioId, "", "cliente");
     }
     
     /**
@@ -57,7 +67,42 @@ public class JwtUtil {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload()
-                .get("usuarioId", Integer.class);
+                .get("usuario_id", Integer.class);
+    }
+    
+    /**
+     * Obtiene el nombre del usuario del token
+     */
+    public String getNombreFromToken(String token) {
+        return Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .get("nombre", String.class);
+    }
+    
+    /**
+     * Obtiene el rol del usuario del token
+     */
+    public String getRolFromToken(String token) {
+        return Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .get("rol", String.class);
+    }
+    
+    /**
+     * Obtiene todos los claims del token
+     */
+    public java.util.Map<String, Object> getAllClaimsFromToken(String token) {
+        return Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
     
     /**
