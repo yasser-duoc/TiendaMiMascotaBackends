@@ -15,7 +15,6 @@ import com.tiendamascota.service.AuthService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/auth")
@@ -28,7 +27,7 @@ public class AuthController {
     
     @PostMapping("/login")
     @Operation(summary = "Iniciar sesión", description = "Autentica un usuario con email y contraseña")
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
         try {
             AuthResponse response = authService.login(request);
             return ResponseEntity.ok(response);
@@ -41,7 +40,7 @@ public class AuthController {
     
     @PostMapping("/registro")
     @Operation(summary = "Registrarse", description = "Crea una nueva cuenta de usuario")
-    public ResponseEntity<AuthResponse> registro(@Valid @RequestBody RegistroRequest request) {
+    public ResponseEntity<AuthResponse> registro(@RequestBody RegistroRequest request) {
         try {
             AuthResponse response = authService.registro(request);
             return ResponseEntity.ok(response);
