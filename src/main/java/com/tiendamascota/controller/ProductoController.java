@@ -5,9 +5,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -18,7 +15,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.tiendamascota.dto.VerificarStockRequest;
@@ -43,25 +39,13 @@ public class ProductoController {
     private OrdenService ordenService;
     
     @GetMapping
-    @Operation(summary = "Obtener todos los productos con paginación", description = "Retorna una lista paginada de productos")
-    public ResponseEntity<?> obtenerTodos(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
-    ) {
+    @Operation(summary = "Obtener todos los productos", description = "Retorna una lista de todos los productos")
+    public ResponseEntity<List<Producto>> obtenerTodos() {
         try {
-            Pageable pageable = PageRequest.of(page, size);
-            Page<Producto> productosPage = productoRepository.findAll(pageable);
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("productos", productosPage.getContent());
-            response.put("currentPage", productosPage.getNumber());
-            response.put("totalItems", productosPage.getTotalElements());
-            response.put("totalPages", productosPage.getTotalPages());
-            
-            return ResponseEntity.ok(response);
+            List<Producto> productos = productoRepository.findAll();
+            return ResponseEntity.ok(productos);
         } catch (Exception e) {
-            // Fallback: retornar todos sin paginación
-            return ResponseEntity.ok(productoRepository.findAll());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
     
