@@ -32,14 +32,33 @@ public class SecurityConfig {
     
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("*"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("*"));
-        configuration.setAllowCredentials(false);
+        CorsConfiguration config = new CorsConfiguration();
+        
+        // Permitir patrones para Android (todas las IPs/puertos)
+        config.setAllowedOriginPatterns(Arrays.asList("*"));
+        
+        // Orígenes específicos para web
+        config.addAllowedOrigin("https://mimascota.vercel.app");
+        config.addAllowedOrigin("http://localhost:5173");
+        config.addAllowedOrigin("http://localhost:3000");
+        
+        // Métodos HTTP permitidos
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        
+        // Headers permitidos
+        config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With"));
+        
+        // Exponer headers al cliente
+        config.setExposedHeaders(Arrays.asList("Authorization"));
+        
+        // Permitir credenciales
+        config.setAllowCredentials(true);
+        
+        // Cache de preflight requests por 1 hora
+        config.setMaxAge(3600L);
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
+        source.registerCorsConfiguration("/**", config);
         return source;
     }
     
