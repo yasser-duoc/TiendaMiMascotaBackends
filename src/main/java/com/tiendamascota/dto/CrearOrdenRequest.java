@@ -2,11 +2,19 @@ package com.tiendamascota.dto;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class CrearOrdenRequest {
     
+    @JsonProperty("usuario_id")
     private Long usuarioId;
+    
+    @JsonProperty("es_invitado")
     private Boolean esInvitado;
+    
+    @JsonProperty("datos_envio")
     private DatosEnvio datosEnvio;
+    
     private List<ItemOrden> items;
     private Integer subtotal;
     private Integer total;
@@ -63,13 +71,21 @@ public class CrearOrdenRequest {
     }
     
     public static class DatosEnvio {
+        @JsonProperty("nombre_completo")
         private String nombre;
+        
         private String email;
         private String telefono;
         private String direccion;
         private String ciudad;
         private String region;
+        
+        @JsonProperty("codigo_postal")
         private String codigoPostal;
+        
+        @JsonProperty("metodo_pago")
+        private String metodoPago;
+        
         private String pais;
         
         public DatosEnvio() {
@@ -132,6 +148,14 @@ public class CrearOrdenRequest {
             this.codigoPostal = codigoPostal;
         }
         
+        public String getMetodoPago() {
+            return metodoPago;
+        }
+        
+        public void setMetodoPago(String metodoPago) {
+            this.metodoPago = metodoPago;
+        }
+        
         public String getPais() {
             return pais;
         }
@@ -142,8 +166,12 @@ public class CrearOrdenRequest {
     }
     
     public static class ItemOrden {
+        @JsonProperty("producto_id")
         private Integer productoId;
+        
         private Integer cantidad;
+        
+        @JsonProperty("precio_unitario")
         private Integer precioUnitario;
         
         public ItemOrden() {
