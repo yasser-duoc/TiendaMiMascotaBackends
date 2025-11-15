@@ -183,6 +183,7 @@ public class OrdenService {
     /**
      * Obtener órdenes de un usuario con todos los detalles
      */
+    @Transactional(readOnly = true)
     public List<OrdenHistorialResponse> obtenerHistorialOrdenes(Long usuarioId) {
         List<Orden> ordenes = ordenRepository.findByUsuarioIdOrderByFechaDesc(usuarioId);
         List<OrdenHistorialResponse> historial = new ArrayList<>();
