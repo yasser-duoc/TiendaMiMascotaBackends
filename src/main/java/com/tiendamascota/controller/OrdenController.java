@@ -16,10 +16,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.tiendamascota.dto.CrearOrdenRequest;
+import com.tiendamascota.dto.OrdenHistorialResponse;
 import com.tiendamascota.dto.OrdenResponse;
 import com.tiendamascota.dto.VerificarStockRequest;
 import com.tiendamascota.dto.VerificarStockResponse;
-import com.tiendamascota.model.Orden;
 import com.tiendamascota.service.OrdenService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -68,14 +68,14 @@ public class OrdenController {
     }
     
     /**
-     * Obtener órdenes de un usuario
+     * Obtener historial completo de órdenes de un usuario
      */
     @GetMapping("/usuario/{usuarioId}")
-    @Operation(summary = "Obtener órdenes por usuario", 
-               description = "Retorna todas las órdenes de un usuario específico")
-    public ResponseEntity<?> obtenerOrdenesPorUsuario(@PathVariable Long usuarioId) {
+    @Operation(summary = "Obtener historial de órdenes por usuario", 
+               description = "Retorna todas las órdenes con detalles completos de un usuario específico")
+    public ResponseEntity<?> obtenerHistorialOrdenes(@PathVariable Long usuarioId) {
         try {
-            List<Orden> ordenes = ordenService.obtenerOrdenesPorUsuario(usuarioId);
+            List<OrdenHistorialResponse> ordenes = ordenService.obtenerHistorialOrdenes(usuarioId);
             return ResponseEntity.ok(ordenes);
         } catch (Exception e) {
             Map<String, Object> error = new HashMap<>();

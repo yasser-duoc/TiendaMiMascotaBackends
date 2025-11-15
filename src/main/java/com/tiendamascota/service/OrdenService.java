@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.tiendamascota.dto.CrearOrdenRequest;
+import com.tiendamascota.dto.OrdenHistorialResponse;
 import com.tiendamascota.dto.OrdenResponse;
 import com.tiendamascota.dto.VerificarStockRequest;
 import com.tiendamascota.dto.VerificarStockResponse;
@@ -151,6 +152,7 @@ public class OrdenService {
             item.setOrden(orden);
             item.setProductoId(itemRequest.getProductoId());
             item.setProductoNombre(producto.getNombre());
+            item.setProductoImagen(producto.getImageUrl());
             Integer cantidad = itemRequest.getCantidad();
             Integer precioUnitario = itemRequest.getPrecioUnitario();
             item.setCantidad(cantidad);
@@ -179,7 +181,56 @@ public class OrdenService {
     }
     
     /**
-     * Obtener órdenes de un usuario
+     * Obtener órdenes de un usuario con todos los detalles
+     */
+    public List<OrdenHistorialResponse> obtenerHistorialOrdenes(Long usuarioId) {
+        List<Orden> ordenes = ordenRepository.findByUsuarioIdOrderByFechaDesc(usuarioId);
+        List<OrdenHistorialResponse> historial = new ArrayList<>();
+        
+        for (Orden orden : ordenes) {
+            OrdenHistorialResponse response = new OrdenHistorialResponse();
+            response.setId(orden.getId());
+            response.setNumeroOrden(orden.getNumeroOrden());
+            response.setFecha(orden.getFecha());
+            response.setEstado(orden.getEstado());
+            response.setTotal(orden.getTotal());
+            response.setSubtotal(orden.getSubtotal());
+            response.setEsInvitado(orden.getEsInvitado());
+            response.setUsuarioId(orden.getUsuarioId());
+            
+            // Datos de envío
+            OrdenHistorialResponse.DatosEnvioResponse datosEnvio = new OrdenHistorialResponse.DatosEnvioResponse();
+            datosEnvio.setNombre(orden.getNombreEnvio());
+            datosEnvio.setEmail(orden.getEmailEnvio());
+            datosEnvio.setTelefono(orden.getTelefonoEnvio());
+            datosEnvio.setDireccion(orden.getDireccionEnvio());
+            datosEnvio.setCiudad(orden.getCiudadEnvio());
+            datosEnvio.setRegion(orden.getRegionEnvio());
+            datosEnvio.setCodigoPostal(orden.getCodigoPostalEnvio());
+            datosEnvio.setMetodoPago(orden.getMetodoPago());
+            response.setDatosEnvio(datosEnvio);
+            
+            // Productos
+            List<OrdenHistorialResponse.ProductoOrdenResponse> productos = new ArrayList<>();
+            for (OrdenItem item : orden.getItems()) {
+                OrdenHistorialResponse.ProductoOrdenResponse productoResponse = new OrdenHistorialResponse.ProductoOrdenResponse();
+                productoResponse.setProductoId(item.getProductoId());
+                productoResponse.setNombre(item.getProductoNombre());
+                productoResponse.setCantidad(item.getCantidad());
+                productoResponse.setPrecioUnitario(item.getPrecioUnitario());
+                productoResponse.setImagen(item.getProductoImagen());
+                productos.add(productoResponse);
+            }
+            response.setProductos(productos);
+            
+            historial.add(response);
+        }
+        
+        return historial;
+    }
+    
+    /**
+     * Obtener órdenes de un usuario (formato simple)
      */
     public List<Orden> obtenerOrdenesPorUsuario(Long usuarioId) {
         return ordenRepository.findByUsuarioIdOrderByFechaDesc(usuarioId);

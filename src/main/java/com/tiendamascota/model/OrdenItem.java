@@ -32,6 +32,8 @@ public class OrdenItem {
     
     private String productoNombre;
     
+    private String productoImagen;
+    
     @Column(nullable = false)
     private Integer cantidad;
     
@@ -76,6 +78,14 @@ public class OrdenItem {
     
     public void setProductoNombre(String productoNombre) {
         this.productoNombre = productoNombre;
+    }
+    
+    public String getProductoImagen() {
+        return productoImagen;
+    }
+    
+    public void setProductoImagen(String productoImagen) {
+        this.productoImagen = productoImagen;
     }
     
     public Integer getCantidad() {

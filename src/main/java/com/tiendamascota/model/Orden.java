@@ -53,6 +53,7 @@ public class Orden {
     private String regionEnvio;
     private String codigoPostalEnvio;
     private String paisEnvio;
+    private String metodoPago; // tarjeta, efectivo, transferencia
     
     @OneToMany(mappedBy = "orden", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrdenItem> items = new ArrayList<>();
@@ -188,6 +189,14 @@ public class Orden {
     
     public void setPaisEnvio(String paisEnvio) {
         this.paisEnvio = paisEnvio;
+    }
+    
+    public String getMetodoPago() {
+        return metodoPago;
+    }
+    
+    public void setMetodoPago(String metodoPago) {
+        this.metodoPago = metodoPago;
     }
     
     public List<OrdenItem> getItems() {
