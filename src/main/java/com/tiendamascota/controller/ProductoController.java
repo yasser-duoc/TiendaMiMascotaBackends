@@ -1,6 +1,8 @@
 package com.tiendamascota.controller;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -38,10 +40,24 @@ public class ProductoController {
     
     @GetMapping("/{id}")
     @Operation(summary = "Obtener producto por ID", description = "Retorna un producto específico por su ID")
-    public ResponseEntity<Producto> obtenerPorId(@PathVariable Integer id) {
-        return productoRepository.findById(java.util.Objects.requireNonNull(id))
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<?> obtenerPorId(@PathVariable Integer id) {
+        try {
+            var producto = productoRepository.findById(java.util.Objects.requireNonNull(id));
+            
+            if (producto.isPresent()) {
+                return ResponseEntity.ok(producto.get());
+            } else {
+                Map<String, Object> error = new HashMap<>();
+                error.put("mensaje", "Producto no encontrado con ID: " + id);
+                error.put("status", HttpStatus.NOT_FOUND.value());
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+            }
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("mensaje", "Error al obtener el producto: " + e.getMessage());
+            error.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
     }
     
     @GetMapping("/categoria/{categoria}")
