@@ -1,11 +1,15 @@
 package com.tiendamascota.dto;
 
+import com.tiendamascota.validation.ValidRut;
+
 public class RegistroRequest {
     private String email;
     private String password;
     private String nombre;
     private String telefono;
     private String direccion;
+    
+    @ValidRut(message = "RUT inválido. Debe estar en formato XX.XXX.XXX-X")
     private String run;
     
     public RegistroRequest() {

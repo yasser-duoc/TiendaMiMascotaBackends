@@ -1,6 +1,9 @@
+com\tiendamascota\util\RutValidator.class
 com\tiendamascota\dto\RegistroRequest.class
+com\tiendamascota\validation\RutValidatorConstraint.class
 com\tiendamascota\TiendaMascotaApplication.class
 com\tiendamascota\config\SecurityConfig.class
+com\tiendamascota\validation\ValidRut.class
 com\tiendamascota\model\Producto.class
 com\tiendamascota\controller\AuthController.class
 com\tiendamascota\security\JwtUtil.class

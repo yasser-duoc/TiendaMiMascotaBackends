@@ -13,3 +13,6 @@ C:\Users\chus\Documents\TiendaMiMascotaBackends\src\main\java\com\tiendamascota\
 C:\Users\chus\Documents\TiendaMiMascotaBackends\src\main\java\com\tiendamascota\security\JwtUtil.java
 C:\Users\chus\Documents\TiendaMiMascotaBackends\src\main\java\com\tiendamascota\service\AuthService.java
 C:\Users\chus\Documents\TiendaMiMascotaBackends\src\main\java\com\tiendamascota\TiendaMascotaApplication.java
+C:\Users\chus\Documents\TiendaMiMascotaBackends\src\main\java\com\tiendamascota\util\RutValidator.java
+C:\Users\chus\Documents\TiendaMiMascotaBackends\src\main\java\com\tiendamascota\validation\RutValidatorConstraint.java
+C:\Users\chus\Documents\TiendaMiMascotaBackends\src\main\java\com\tiendamascota\validation\ValidRut.java
