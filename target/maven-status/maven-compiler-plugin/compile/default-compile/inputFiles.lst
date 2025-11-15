@@ -1,6 +1,15 @@
 C:\Users\chus\Documents\TiendaMiMascotaBackends\src\main\java\com\tiendamascota\config\CorsConfig.java
 C:\Users\chus\Documents\TiendaMiMascotaBackends\src\main\java\com\tiendamascota\config\DataInitializer.java
+C:\Users\chus\Documents\TiendaMiMascotaBackends\src\main\java\com\tiendamascota\config\SecurityConfig.java
+C:\Users\chus\Documents\TiendaMiMascotaBackends\src\main\java\com\tiendamascota\controller\AuthController.java
 C:\Users\chus\Documents\TiendaMiMascotaBackends\src\main\java\com\tiendamascota\controller\ProductoController.java
+C:\Users\chus\Documents\TiendaMiMascotaBackends\src\main\java\com\tiendamascota\dto\AuthResponse.java
+C:\Users\chus\Documents\TiendaMiMascotaBackends\src\main\java\com\tiendamascota\dto\LoginRequest.java
+C:\Users\chus\Documents\TiendaMiMascotaBackends\src\main\java\com\tiendamascota\dto\RegistroRequest.java
 C:\Users\chus\Documents\TiendaMiMascotaBackends\src\main\java\com\tiendamascota\model\Producto.java
+C:\Users\chus\Documents\TiendaMiMascotaBackends\src\main\java\com\tiendamascota\model\Usuario.java
 C:\Users\chus\Documents\TiendaMiMascotaBackends\src\main\java\com\tiendamascota\repository\ProductoRepository.java
+C:\Users\chus\Documents\TiendaMiMascotaBackends\src\main\java\com\tiendamascota\repository\UsuarioRepository.java
+C:\Users\chus\Documents\TiendaMiMascotaBackends\src\main\java\com\tiendamascota\security\JwtUtil.java
+C:\Users\chus\Documents\TiendaMiMascotaBackends\src\main\java\com\tiendamascota\service\AuthService.java
 C:\Users\chus\Documents\TiendaMiMascotaBackends\src\main\java\com\tiendamascota\TiendaMascotaApplication.java
