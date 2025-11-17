@@ -216,4 +216,45 @@ public class ProductoController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
+    
+    /**
+     * FORZAR regeneración de TODAS las imágenes (usar solo cuando sea necesario)
+     */
+    @PostMapping("/forzar-regenerar-imagenes")
+    @Operation(summary = "Forzar regeneración de todas las imágenes", 
+               description = "Regenera imágenes de TODOS los productos sin importar su estado actual")
+    public ResponseEntity<?> forzarRegenerarImagenes() {
+        try {
+            List<Producto> todosProductos = productoRepository.findAll();
+            
+            System.out.println("🔄 FORZANDO regeneración de " + todosProductos.size() + " productos");
+            
+            int contador = 0;
+            for (Producto p : todosProductos) {
+                System.out.println("📦 Regenerando: " + p.getNombre() + " | Categoría: " + p.getCategory());
+                
+                String imagen = imagenService.generarImagenParaProducto(p.getNombre(), p.getCategory());
+                String imagenAnterior = p.getImageUrl();
+                p.setImageUrl(imagen);
+                productoRepository.save(p);
+                contador++;
+                System.out.println("✅ ANTES: " + imagenAnterior);
+                System.out.println("✅ AHORA: " + imagen);
+            }
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", "TODAS las imágenes fueron regeneradas desde Unsplash");
+            response.put("productosActualizados", contador);
+            response.put("productosTotal", todosProductos.size());
+            response.put("timestamp", java.time.LocalDateTime.now());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("mensaje", "Error al regenerar imágenes: " + e.getMessage());
+            error.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            error.put("errorDetail", e.toString());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
 }
