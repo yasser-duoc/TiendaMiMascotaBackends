@@ -146,7 +146,9 @@ public class ProductoController {
                 .toList();
             
             // Eliminar duplicados
-            productoRepository.deleteAll(duplicados);
+            if (!duplicados.isEmpty()) {
+                productoRepository.deleteAll(duplicados);
+            }
             
             long countAfter = productoRepository.count();
             

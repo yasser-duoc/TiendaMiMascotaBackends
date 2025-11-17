@@ -28,7 +28,7 @@ public class ImagenService {
             String url = String.format("%s?query=%s&client_id=%s&per_page=1&orientation=squarish&order_by=relevant",
                 UNSPLASH_API_URL, 
                 keywords.replace(" ", "%20"), // URL encode espacios
-                accessKey
+                accessKey != null ? accessKey : ""
             );
             
             UnsplashResponse response = restTemplate.getForObject(url, UnsplashResponse.class);
@@ -36,7 +36,7 @@ public class ImagenService {
             if (response != null && response.getResults() != null && !response.getResults().isEmpty()) {
                 return response.getResults().get(0).getUrls().getSmall(); // URL 400x400
             }
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             System.err.println("Error generando imagen desde Unsplash: " + e.getMessage());
         }
         
@@ -145,20 +145,14 @@ public class ImagenService {
         }
         
         // === FALLBACK POR CATEGORÍA ===
-        switch (categoria) {
-            case "Alimento": 
-                return "pet food bowl product";
-            case "Juguetes": 
-                return "pet toy play colorful";
-            case "Accesorios": 
-                return "pet accessories supplies";
-            case "Higiene": 
-                return "pet grooming supplies";
-            case "Medicamentos": 
-                return "pet medicine treatment";
-            default: 
-                return "pet supplies product";
-        }
+        return switch (categoria) {
+            case "Alimento" -> "pet food bowl product";
+            case "Juguetes" -> "pet toy play colorful";
+            case "Accesorios" -> "pet accessories supplies";
+            case "Higiene" -> "pet grooming supplies";
+            case "Medicamentos" -> "pet medicine treatment";
+            default -> "pet supplies product";
+        };
     }
     
     /**
