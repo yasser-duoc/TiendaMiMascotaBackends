@@ -130,7 +130,7 @@ public class ProductoController {
      * ENDPOINT TEMPORAL - Eliminar después de limpiar duplicados
      * Elimina productos duplicados manteniendo solo los primeros 18
      */
-    @DeleteMapping("/limpiar-duplicados")
+    @PostMapping("/limpiar-duplicados")
     @Operation(summary = "Limpiar productos duplicados", description = "TEMPORAL: Elimina productos con ID > 18")
     public ResponseEntity<?> limpiarDuplicados() {
         try {
