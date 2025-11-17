@@ -24,6 +24,7 @@ import com.tiendamascota.repository.ProductoRepository;
 import com.tiendamascota.service.OrdenService;
 
 import io.swagger.v3.oas.annotations.Operation;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
@@ -44,6 +45,9 @@ public class ProductoController {
     public ResponseEntity<List<Producto>> obtenerTodos() {
         try {
             List<Producto> productos = productoRepository.findAll();
+            // Normalizar URLs de imagen (devuelven URL absolutas para clientes)
+            String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
+            productos.forEach(p -> p.setImageUrl(normalizeImageUrl(p.getImageUrl(), baseUrl)));
             return ResponseEntity.ok(productos);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
@@ -57,6 +61,8 @@ public class ProductoController {
             var producto = productoRepository.findById(java.util.Objects.requireNonNull(id));
             
             if (producto.isPresent()) {
+                String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
+                producto.get().setImageUrl(normalizeImageUrl(producto.get().getImageUrl(), baseUrl));
                 return ResponseEntity.ok(producto.get());
             } else {
                 Map<String, Object> error = new HashMap<>();
@@ -75,7 +81,48 @@ public class ProductoController {
     @GetMapping("/categoria/{categoria}")
     @Operation(summary = "Obtener productos por categoría", description = "Retorna todos los productos de una categoría específica")
     public ResponseEntity<List<Producto>> obtenerPorCategoria(@PathVariable String categoria) {
-        return ResponseEntity.ok(productoRepository.findByCategory(categoria));
+        List<Producto> productos = productoRepository.findByCategory(categoria);
+        String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
+        productos.forEach(p -> p.setImageUrl(normalizeImageUrl(p.getImageUrl(), baseUrl)));
+        return ResponseEntity.ok(productos);
+    }
+
+    /**
+     * Normaliza la url de imagen que pueden venir en distintos formatos:
+     * - Relativas ("/images/..") -> prefix con baseUrl (por ej. https://miapp)
+     * - http:// -> https:// para evitar mixed-content
+     * - urls sin esquema -> prefija https://
+     */
+    private String normalizeImageUrl(String url, String baseUrl) {
+        if (url == null || url.isBlank()) return url;
+        url = url.trim();
+
+        // Relativas: /images/abc.jpg
+        if (url.startsWith("/")) {
+            return baseUrl + url;
+        }
+
+        // Doble slash //images... -> https://images...
+        if (url.startsWith("//")) {
+            return "https:" + url;
+        }
+
+        // Malformado: https:/images... -> https://images...
+        if (url.startsWith("https:/") && !url.startsWith("https://")) {
+            return url.replaceFirst("https:/", "https://");
+        }
+
+        // Forzar https para evitar mixed-content
+        if (url.startsWith("http://")) {
+            return url.replaceFirst("http://", "https://");
+        }
+
+        // Si no empieza con esquema, asume https
+        if (!url.matches("^[a-zA-Z][a-zA-Z0-9+.-]*://.*")) {
+            return "https://" + url;
+        }
+
+        return url;
     }
     
     @PostMapping
