@@ -2,8 +2,12 @@ package com.tiendamascota.dto;
 
 import java.util.List;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "Request para verificar stock de una lista de productos", example = "{\"items\":[{\"productoId\":1,\"cantidad\":1}]}")
 public class VerificarStockRequest {
     
+    @Schema(description = "Lista de items a verificar")
     private List<ItemStock> items;
     
     public VerificarStockRequest() {
@@ -18,7 +22,9 @@ public class VerificarStockRequest {
     }
     
     public static class ItemStock {
+        @Schema(description = "ID del producto", example = "1")
         private Integer productoId;
+        @Schema(description = "Cantidad requerida", example = "1")
         private Integer cantidad;
         
         public ItemStock() {

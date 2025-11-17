@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -27,10 +28,14 @@ import com.tiendamascota.service.ImagenService;
 import com.tiendamascota.service.OrdenService;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
+@Profile("local")
 @RestController
-@RequestMapping("/productos")
+@RequestMapping("/api/productos")
 @CrossOrigin(origins = "*")
 @Tag(name = "Productos", description = "API de gestión de productos")
 public class ProductoController {
@@ -48,6 +53,10 @@ public class ProductoController {
     
     @GetMapping
     @Operation(summary = "Obtener todos los productos", description = "Retorna una lista de todos los productos")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Lista de productos", content = @Content(mediaType = "application/json")),
+        @ApiResponse(responseCode = "500", description = "Error interno", content = @Content)
+    })
     public ResponseEntity<List<Producto>> obtenerTodos() {
         try {
             List<Producto> productos = productoRepository.findAll();
@@ -62,6 +71,11 @@ public class ProductoController {
     
     @GetMapping("/{id}")
     @Operation(summary = "Obtener producto por ID", description = "Retorna un producto específico por su ID")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Producto encontrado", content = @Content(mediaType = "application/json")),
+        @ApiResponse(responseCode = "404", description = "Producto no encontrado", content = @Content),
+        @ApiResponse(responseCode = "500", description = "Error interno", content = @Content)
+    })
     public ResponseEntity<?> obtenerPorId(@PathVariable Integer id) {
         try {
             var producto = productoRepository.findById(java.util.Objects.requireNonNull(id));
@@ -180,6 +194,10 @@ public class ProductoController {
     
     @PostMapping
     @Operation(summary = "Crear nuevo producto", description = "Crea un nuevo producto en la base de datos")
+    @ApiResponses({
+        @ApiResponse(responseCode = "201", description = "Producto creado", content = @Content(mediaType = "application/json")),
+        @ApiResponse(responseCode = "400", description = "Petición inválida", content = @Content)
+    })
     public ResponseEntity<Producto> crear(@RequestBody Producto producto) {
         Producto nuevo = productoRepository.save(java.util.Objects.requireNonNull(producto));
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevo);
@@ -187,6 +205,10 @@ public class ProductoController {
     
     @PutMapping("/{id}")
     @Operation(summary = "Actualizar producto", description = "Actualiza un producto existente")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Producto actualizado", content = @Content(mediaType = "application/json")),
+        @ApiResponse(responseCode = "404", description = "Producto no encontrado", content = @Content)
+    })
     public ResponseEntity<Producto> actualizar(@PathVariable Integer id, @RequestBody Producto productoActualizado) {
         return productoRepository.findById(java.util.Objects.requireNonNull(id))
                 .map(producto -> {
@@ -205,6 +227,10 @@ public class ProductoController {
     
     @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar producto", description = "Elimina un producto de la base de datos")
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "Producto eliminado", content = @Content),
+        @ApiResponse(responseCode = "404", description = "Producto no encontrado", content = @Content)
+    })
     public ResponseEntity<Void> eliminar(@PathVariable Integer id) {
         if (productoRepository.existsById(java.util.Objects.requireNonNull(id))) {
             productoRepository.deleteById(java.util.Objects.requireNonNull(id));
@@ -215,6 +241,10 @@ public class ProductoController {
     
     @PostMapping("/verificar-stock")
     @Operation(summary = "Verificar stock de productos", description = "Verifica si hay stock disponible para una lista de productos")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Resultado de la verificación", content = @Content(mediaType = "application/json")),
+        @ApiResponse(responseCode = "400", description = "Petición inválida", content = @Content)
+    })
     public ResponseEntity<?> verificarStock(@RequestBody VerificarStockRequest request) {
         try {
             VerificarStockResponse response = ordenService.verificarStock(request);
