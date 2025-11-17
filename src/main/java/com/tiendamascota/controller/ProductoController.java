@@ -25,6 +25,7 @@ import com.tiendamascota.dto.VerificarStockRequest;
 import com.tiendamascota.dto.VerificarStockResponse;
 import com.tiendamascota.model.Producto;
 import com.tiendamascota.repository.ProductoRepository;
+import com.tiendamascota.service.ImagenService;
 import com.tiendamascota.service.OrdenService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -41,6 +42,9 @@ public class ProductoController {
     
     @Autowired
     private OrdenService ordenService;
+    
+    @Autowired
+    private ImagenService imagenService;
     
     @GetMapping
     @Operation(summary = "Obtener todos los productos con paginación", description = "Retorna una lista paginada de productos")
@@ -172,6 +176,50 @@ public class ProductoController {
         } catch (Exception e) {
             Map<String, Object> error = new HashMap<>();
             error.put("mensaje", "Error al limpiar duplicados: " + e.getMessage());
+            error.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+    
+    /**
+     * Genera imágenes automáticamente para productos que no tienen
+     */
+    @PostMapping("/generar-imagenes")
+    @Operation(summary = "Generar imágenes para productos sin imagen", 
+               description = "Actualiza productos sin imagen usando Unsplash API")
+    public ResponseEntity<?> generarImagenesExistentes() {
+        try {
+            // Buscar productos sin imagen o con rutas locales
+            List<Producto> productosSinImagen = productoRepository.findByImageUrlIsNullOrImageUrlEquals("");
+            
+            // También incluir productos con rutas locales /images/
+            List<Producto> todosProductos = productoRepository.findAll();
+            List<Producto> productosRutasLocales = todosProductos.stream()
+                .filter(p -> p.getImageUrl() != null && p.getImageUrl().startsWith("/images/"))
+                .toList();
+            
+            // Combinar ambas listas
+            List<Producto> productosActualizar = new java.util.ArrayList<>(productosSinImagen);
+            productosActualizar.addAll(productosRutasLocales);
+            
+            int contador = 0;
+            for (Producto p : productosActualizar) {
+                String imagen = imagenService.generarImagenParaProducto(p.getNombre(), p.getCategory());
+                p.setImageUrl(imagen);
+                productoRepository.save(p);
+                contador++;
+                System.out.println("✅ Imagen generada para: " + p.getNombre() + " → " + imagen);
+            }
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", "Imágenes generadas exitosamente desde Unsplash");
+            response.put("productosActualizados", contador);
+            response.put("timestamp", java.time.LocalDateTime.now());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("mensaje", "Error al generar imágenes: " + e.getMessage());
             error.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
