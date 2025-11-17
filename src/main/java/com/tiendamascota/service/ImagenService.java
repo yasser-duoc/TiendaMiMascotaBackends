@@ -1,106 +1,100 @@
 package com.tiendamascota.service;
 
-import java.util.List;
-import java.util.Map;
-
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-
-import com.tiendamascota.dto.UnsplashPhoto;
-import com.tiendamascota.dto.UnsplashResponse;
 
 @Service
 public class ImagenService {
     
-    @Value("${unsplash.access.key}")
-    private String accessKey;
-    
-    private static final String UNSPLASH_API_URL = "https://api.unsplash.com/search/photos";
-    private final RestTemplate restTemplate = new RestTemplate();
-    
     /**
-     * Genera URL de imagen automáticamente según el nombre del producto
+     * Genera URL de imagen específica según el nombre exacto del producto
+     * Usando imágenes directas y confiables de tiendas veterinarias reales
      */
     public String generarImagenParaProducto(String nombreProducto, String categoria) {
-        try {
-            String keywords = extraerKeywords(nombreProducto, categoria);
-            
-            String url = String.format("%s?query=%s&client_id=%s&per_page=1&orientation=squarish",
-                UNSPLASH_API_URL, 
-                keywords, 
-                accessKey
-            );
-            
-            UnsplashResponse response = restTemplate.getForObject(url, UnsplashResponse.class);
-            
-            if (response != null && response.getResults() != null && !response.getResults().isEmpty()) {
-                return response.getResults().get(0).getUrls().getSmall(); // URL 400x400
-            }
-        } catch (Exception e) {
-            System.err.println("Error generando imagen desde Unsplash: " + e.getMessage());
+        String nombre = nombreProducto.toLowerCase().trim();
+        
+        // === MAPEO DIRECTO POR NOMBRE DE PRODUCTO ===
+        
+        // ALIMENTOS
+        if (nombre.contains("alimento") && nombre.contains("perro")) {
+            return "https://ferosor.cl/307-large_default/alimento-para-perro-cachorro-fit-formula-saco-10-kg.jpg";
+        }
+        if (nombre.contains("alimento") && nombre.contains("gato")) {
+            return "https://www.superzoo.cl/on/demandware.static/-/Sites-SuperZoo-master-catalog/default/dwf30e77a8/images/549a0-web.jpg";
         }
         
-        return obtenerImagenPorDefecto(categoria);
+        // SNACKS/PREMIOS
+        if (nombre.contains("snack") || nombre.contains("premio") || nombre.contains("golosina") || nombre.contains("natural")) {
+            return "https://dojiw2m9tvv09.cloudfront.net/42482/product/X_snacknaturaldogvacuno3074.jpg?129&time=1763349073";
+        }
+        
+        // JUGUETES
+        if (nombre.contains("pelota")) {
+            return "https://cdnx.jumpseller.com/guaudor/image/43385770/resize/1280/1280?1702321041";
+        }
+        if (nombre.contains("juguete") && nombre.contains("gato")) {
+            return "https://www.distribuidoralira.cl/wp-content/uploads/2025/07/3936-3.jpg";
+        }
+        if (nombre.contains("cuerda")) {
+            return "https://pobreguacho.cl/wp-content/uploads/2021/06/JUGUETE-CUERDA-BARRA-20cm.jpg";
+        }
+        
+        // ACCESORIOS
+        if (nombre.contains("collar")) {
+            return "https://m.media-amazon.com/images/I/81c5yVZy8EL._AC_SX679_.jpg";
+        }
+        if (nombre.contains("correa")) {
+            return "https://i5.walmartimages.cl/asr/756edadc-d882-4264-b196-95f66ef8cb2b.c8e887a6e0d86fa402fad618bd71ec36.jpeg?odnHeight=612&odnWidth=612&odnBg=FFFFFF";
+        }
+        if (nombre.contains("cama")) {
+            return "https://arenaparamascotas.cl/wp-content/uploads/2025/05/Cama-Peluda-Gris-Wonder-Dog.webp";
+        }
+        if (nombre.contains("comedero")) {
+            return "https://dojiw2m9tvv09.cloudfront.net/4953/product/X_smartfeedautomaticpetfeeder3808.jpg?68&time=1763349445";
+        }
+        if (nombre.contains("bebedero")) {
+            return "https://faunasalud.cl/wp-content/uploads/2023/04/5-42.jpg";
+        }
+        if (nombre.contains("transportadora")) {
+            return "https://pethome.cl/imagenes/productos/jaula-transportadora-kennel-para-perros-y-gatos.webp";
+        }
+        
+        // HIGIENE
+        if (nombre.contains("shampoo") || nombre.contains("champú")) {
+            return "https://dragpharma.cl/wp-content/uploads/2023/05/CANISH-HIPOALERGENICOP.jpg";
+        }
+        if (nombre.contains("cepillo")) {
+            return "https://www.clubdeperrosygatos.cl/wp-content/uploads/2021/11/cepillo-azul.webp";
+        }
+        if (nombre.contains("toallita")) {
+            return "https://www.clubdeperrosygatos.cl/wp-content/uploads/2021/07/Toallas-Clorhexidina1-350x350-1.jpeg";
+        }
+        
+        // MEDICAMENTOS
+        if (nombre.contains("antipulgas") || nombre.contains("pulga") || nombre.contains("garrapata")) {
+            return "https://rimage.ripley.cl/home.ripley/Attachment/MKP/6509/MPM10001708760/full_image-1.png";
+        }
+        if (nombre.contains("vitamina")) {
+            return "https://dojiw2m9tvv09.cloudfront.net/42482/product/X_apetipet2294.jpg?129&time=1763349767";
+        }
+        if (nombre.contains("desparasitante")) {
+            return "https://www.superzoo.cl/on/demandware.static/-/Sites-SuperZoo-master-catalog/default/dwcde8288c/images/4e903-flovovermic-1.jpg";
+        }
+        
+        // FALLBACK POR CATEGORÍA
+        return obtenerImagenPorCategoria(categoria);
     }
     
     /**
-     * Extrae palabras clave en inglés para buscar en Unsplash
+     * Imágenes por categoría (fallback)
      */
-    private String extraerKeywords(String nombreProducto, String categoria) {
-        String nombre = nombreProducto.toLowerCase();
-        
-        // Mapeo español -> inglés
-        if (nombre.contains("perro") || nombre.contains("perros")) {
-            if (nombre.contains("alimento") || nombre.contains("comida")) return "dog food";
-            if (nombre.contains("juguete") || nombre.contains("pelota")) return "dog toy";
-            if (nombre.contains("collar")) return "dog collar";
-            if (nombre.contains("correa")) return "dog leash";
-            if (nombre.contains("cama")) return "dog bed";
-            return "dog";
-        }
-        
-        if (nombre.contains("gato") || nombre.contains("gatos")) {
-            if (nombre.contains("alimento") || nombre.contains("comida")) return "cat food";
-            if (nombre.contains("juguete")) return "cat toy";
-            if (nombre.contains("collar")) return "cat collar";
-            if (nombre.contains("cama")) return "cat bed";
-            return "cat";
-        }
-        
-        if (nombre.contains("alimento") || nombre.contains("comida")) return "pet food";
-        if (nombre.contains("juguete") || nombre.contains("pelota")) return "pet toy";
-        if (nombre.contains("collar")) return "pet collar";
-        if (nombre.contains("correa")) return "pet leash";
-        if (nombre.contains("shampoo") || nombre.contains("champú")) return "pet shampoo";
-        if (nombre.contains("cama")) return "pet bed";
-        if (nombre.contains("transportadora")) return "pet carrier";
-        if (nombre.contains("vitamina")) return "pet vitamins";
-        if (nombre.contains("desparasitante") || nombre.contains("antipulgas")) return "pet medicine";
-        if (nombre.contains("cepillo")) return "pet brush";
-        
-        // Fallback por categoría
-        switch (categoria) {
-            case "Alimento": return "pet food";
-            case "Juguetes": return "pet toy";
-            case "Accesorios": return "pet accessories";
-            case "Higiene": return "pet grooming";
-            case "Medicamentos": return "pet medicine";
-            default: return "pet product";
-        }
-    }
-    
-    /**
-     * Imágenes por defecto si falla Unsplash
-     */
-    private String obtenerImagenPorDefecto(String categoria) {
-        Map<String, String> defaults = Map.of(
-            "Alimento", "https://images.unsplash.com/photo-1589924691995-400dc9ecc119?w=400",
-            "Juguetes", "https://images.unsplash.com/photo-1535294435445-d7249524ef2e?w=400",
-            "Accesorios", "https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=400",
-            "Higiene", "https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=400",
-            "Medicamentos", "https://images.unsplash.com/photo-1450778869180-41d0601e046e?w=400"
-        );
-        return defaults.getOrDefault(categoria, "https://images.unsplash.com/photo-1450778869180-41d0601e046e?w=400");
+    private String obtenerImagenPorCategoria(String categoria) {
+        return switch (categoria) {
+            case "Alimento" -> "https://ferosor.cl/307-large_default/alimento-para-perro-cachorro-fit-formula-saco-10-kg.jpg";
+            case "Juguetes" -> "https://cdnx.jumpseller.com/guaudor/image/43385770/resize/1280/1280?1702321041";
+            case "Accesorios" -> "https://m.media-amazon.com/images/I/81c5yVZy8EL._AC_SX679_.jpg";
+            case "Higiene" -> "https://dragpharma.cl/wp-content/uploads/2023/05/CANISH-HIPOALERGENICOP.jpg";
+            case "Medicamentos" -> "https://rimage.ripley.cl/home.ripley/Attachment/MKP/6509/MPM10001708760/full_image-1.png";
+            default -> "https://ferosor.cl/307-large_default/alimento-para-perro-cachorro-fit-formula-saco-10-kg.jpg";
+        };
     }
 }

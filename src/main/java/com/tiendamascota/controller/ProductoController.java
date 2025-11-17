@@ -5,9 +5,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -18,9 +15,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import com.tiendamascota.config.ImageMappingsProperties;
 import com.tiendamascota.dto.VerificarStockRequest;
 import com.tiendamascota.dto.VerificarStockResponse;
 import com.tiendamascota.model.Producto;
@@ -42,30 +40,23 @@ public class ProductoController {
     
     @Autowired
     private OrdenService ordenService;
-    
+    @Autowired
+    private ImageMappingsProperties imageMappingsProperties;
     @Autowired
     private ImagenService imagenService;
     
+    
     @GetMapping
-    @Operation(summary = "Obtener todos los productos con paginación", description = "Retorna una lista paginada de productos")
-    public ResponseEntity<?> obtenerTodos(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
-    ) {
+    @Operation(summary = "Obtener todos los productos", description = "Retorna una lista de todos los productos")
+    public ResponseEntity<List<Producto>> obtenerTodos() {
         try {
-            Pageable pageable = PageRequest.of(page, size);
-            Page<Producto> productosPage = productoRepository.findAll(pageable);
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("productos", productosPage.getContent());
-            response.put("currentPage", productosPage.getNumber());
-            response.put("totalItems", productosPage.getTotalElements());
-            response.put("totalPages", productosPage.getTotalPages());
-            
-            return ResponseEntity.ok(response);
+            List<Producto> productos = productoRepository.findAll();
+            // Normalizar/Resolver URLs de imagen (devuelven URL absolutas para clientes)
+            String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
+            productos.forEach(p -> p.setImageUrl(resolveImageUrl(p, baseUrl)));
+            return ResponseEntity.ok(productos);
         } catch (Exception e) {
-            // Fallback: retornar todos sin paginación
-            return ResponseEntity.ok(productoRepository.findAll());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
     
@@ -76,6 +67,8 @@ public class ProductoController {
             var producto = productoRepository.findById(java.util.Objects.requireNonNull(id));
             
             if (producto.isPresent()) {
+                String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
+                producto.get().setImageUrl(resolveImageUrl(producto.get(), baseUrl));
                 return ResponseEntity.ok(producto.get());
             } else {
                 Map<String, Object> error = new HashMap<>();
@@ -94,7 +87,95 @@ public class ProductoController {
     @GetMapping("/categoria/{categoria}")
     @Operation(summary = "Obtener productos por categoría", description = "Retorna todos los productos de una categoría específica")
     public ResponseEntity<List<Producto>> obtenerPorCategoria(@PathVariable String categoria) {
-        return ResponseEntity.ok(productoRepository.findByCategory(categoria));
+        List<Producto> productos = productoRepository.findByCategory(categoria);
+        String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
+        productos.forEach(p -> p.setImageUrl(resolveImageUrl(p, baseUrl)));
+        return ResponseEntity.ok(productos);
+    }
+
+    /**
+     * Normaliza la url de imagen que pueden venir en distintos formatos:
+     * - Relativas ("/images/..") -> prefix con baseUrl (por ej. https://miapp)
+     * - http:// -> https:// para evitar mixed-content
+     * - urls sin esquema -> prefija https://
+     */
+    private String normalizeImageUrl(String url, String baseUrl) {
+        if (url == null || url.isBlank()) return url;
+        url = url.trim();
+
+        // Relativas: /images/abc.jpg
+        if (url.startsWith("/")) {
+            return baseUrl + url;
+        }
+
+        // Doble slash //images... -> https://images...
+        if (url.startsWith("//")) {
+            return "https:" + url;
+        }
+
+        // Malformado: https:/images... -> https://images...
+        if (url.startsWith("https:/") && !url.startsWith("https://")) {
+            return url.replaceFirst("https:/", "https://");
+        }
+
+        // Forzar https para evitar mixed-content
+        if (url.startsWith("http://")) {
+            return url.replaceFirst("http://", "https://");
+        }
+
+        // Si no empieza con esquema, asume https
+        if (!url.matches("^[a-zA-Z][a-zA-Z0-9+.-]*://.*")) {
+            return "https://" + url;
+        }
+
+        return url;
+    }
+
+    /**
+     * Resuelve la URL final de la imagen para un producto.
+     * - Si existe un mapeo (por id o por slug de nombre) lo usa.
+     * - Si la URL original proviene de Unsplash y no hay mapeo, usa default si está configurado.
+     * - En otros casos aplica `normalizeImageUrl`.
+     */
+    private String resolveImageUrl(Producto producto, String baseUrl) {
+        String original = producto.getImageUrl();
+        if (original == null) return null;
+
+        // 1) Intentar mapeo por ID
+        if (producto.getId() != null && imageMappingsProperties.getMappings() != null) {
+            String byId = imageMappingsProperties.getMappings().get(String.valueOf(producto.getId()));
+            if (byId != null && !byId.isBlank()) return normalizeImageUrl(byId, baseUrl);
+        }
+
+        // 2) Intentar mapeo por slug del nombre
+        if (producto.getNombre() != null && imageMappingsProperties.getMappings() != null) {
+            String slug = producto.getNombre().toLowerCase().replaceAll("[^a-z0-9]+", "-").replaceAll("(^-|-$)", "");
+            String byName = imageMappingsProperties.getMappings().get(slug);
+            if (byName != null && !byName.isBlank()) return normalizeImageUrl(byName, baseUrl);
+        }
+
+        // 3) Si la URL original es Unsplash, relativa o vacía, intentar generar con ImagenService
+        if (original.isBlank() || original.startsWith("/") || original.contains("unsplash.com") || original.contains("images.unsplash")) {
+            // Si existe default configurado y queremos forzar su uso en vez de generar, se podría devolver aquí.
+            // Primero intentamos generar una URL confiable con ImagenService
+            if (imagenService != null) {
+                try {
+                    String gen = imagenService.generarImagenParaProducto(producto.getNombre(), producto.getCategory());
+                    if (gen != null && !gen.isBlank()) {
+                        return normalizeImageUrl(gen, baseUrl);
+                    }
+                } catch (Exception ex) {
+                    // Si falla la generación, seguimos al fallback por default abajo
+                }
+            }
+
+            // Si no se pudo generar, usar default si está configurado
+            String def = imageMappingsProperties.getDefaultUrl();
+            if (def != null && !def.isBlank()) return normalizeImageUrl(def, baseUrl);
+        }
+
+        // 4) En otros casos, devolver la url original normalizada
+        return normalizeImageUrl(original, baseUrl);
     }
     
     @PostMapping
@@ -162,7 +243,9 @@ public class ProductoController {
                 .toList();
             
             // Eliminar duplicados
-            productoRepository.deleteAll(duplicados);
+            if (!duplicados.isEmpty()) {
+                productoRepository.deleteAll(duplicados);
+            }
             
             long countAfter = productoRepository.count();
             
@@ -181,47 +264,7 @@ public class ProductoController {
         }
     }
     
-    /**
-     * Genera imágenes automáticamente para productos que no tienen
-     */
-    @PostMapping("/generar-imagenes")
-    @Operation(summary = "Generar imágenes para productos sin imagen", 
-               description = "Actualiza productos sin imagen usando Unsplash API")
-    public ResponseEntity<?> generarImagenesExistentes() {
-        try {
-            // Buscar productos sin imagen o con rutas locales
-            List<Producto> productosSinImagen = productoRepository.findByImageUrlIsNullOrImageUrlEquals("");
-            
-            // También incluir productos con rutas locales /images/
-            List<Producto> todosProductos = productoRepository.findAll();
-            List<Producto> productosRutasLocales = todosProductos.stream()
-                .filter(p -> p.getImageUrl() != null && p.getImageUrl().startsWith("/images/"))
-                .toList();
-            
-            // Combinar ambas listas
-            List<Producto> productosActualizar = new java.util.ArrayList<>(productosSinImagen);
-            productosActualizar.addAll(productosRutasLocales);
-            
-            int contador = 0;
-            for (Producto p : productosActualizar) {
-                String imagen = imagenService.generarImagenParaProducto(p.getNombre(), p.getCategory());
-                p.setImageUrl(imagen);
-                productoRepository.save(p);
-                contador++;
-                System.out.println("✅ Imagen generada para: " + p.getNombre() + " → " + imagen);
-            }
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("mensaje", "Imágenes generadas exitosamente desde Unsplash");
-            response.put("productosActualizados", contador);
-            response.put("timestamp", java.time.LocalDateTime.now());
-            
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            Map<String, Object> error = new HashMap<>();
-            error.put("mensaje", "Error al generar imágenes: " + e.getMessage());
-            error.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
-        }
-    }
+    // Endpoints de generación de imágenes removidos — se usan URLs directas ahora.
+    
+    // Endpoint de forzado removido — use `ProductoController` normal para editar imágenes.
 }

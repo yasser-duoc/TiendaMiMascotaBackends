@@ -34,19 +34,18 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         
-        // Permitir patrones para Android (todas las IPs/puertos)
-        config.setAllowedOriginPatterns(Arrays.asList("*"));
-        
-        // Orígenes específicos para web
+        // Orígenes específicos para web (Vercel con wildcard para preview deployments)
+        config.addAllowedOriginPattern("https://*.vercel.app");
         config.addAllowedOrigin("https://mimascota.vercel.app");
         config.addAllowedOrigin("http://localhost:5173");
         config.addAllowedOrigin("http://localhost:3000");
+        config.addAllowedOrigin("http://localhost:8080");
         
         // Métodos HTTP permitidos
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         
         // Headers permitidos
-        config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With"));
+        config.setAllowedHeaders(Arrays.asList("*"));
         
         // Exponer headers al cliente
         config.setExposedHeaders(Arrays.asList("Authorization"));
