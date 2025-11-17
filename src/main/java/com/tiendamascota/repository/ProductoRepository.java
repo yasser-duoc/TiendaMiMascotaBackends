@@ -11,4 +11,5 @@ import com.tiendamascota.model.Producto;
 public interface ProductoRepository extends JpaRepository<Producto, Integer> {
     List<Producto> findByCategory(String category);
     List<Producto> findByNombreContainingIgnoreCase(String nombre);
+    List<Producto> findByImageUrlIsNullOrImageUrlEquals(String imageUrl);
 }
