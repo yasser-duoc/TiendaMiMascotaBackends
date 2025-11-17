@@ -249,6 +249,8 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
 const val BASE_URL = "https://tu-backend.onrender.com/api/"
 ```
 
+Nota: El backend ya no utiliza integraciones externas para generación de imágenes (ej., Unsplash). Cada producto contiene `imageUrl` que obtiene imágenes estáticas o de terceros; la generación automática fue removida del backend.
+
 ## 📝 **Licencia**
 
 Este proyecto es privado y propiedad de Tienda Mi Mascota.
