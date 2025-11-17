@@ -23,6 +23,7 @@ import com.tiendamascota.dto.VerificarStockRequest;
 import com.tiendamascota.dto.VerificarStockResponse;
 import com.tiendamascota.model.Producto;
 import com.tiendamascota.repository.ProductoRepository;
+import com.tiendamascota.service.ImagenService;
 import com.tiendamascota.service.OrdenService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -41,6 +42,8 @@ public class ProductoController {
     private OrdenService ordenService;
     @Autowired
     private ImageMappingsProperties imageMappingsProperties;
+    @Autowired
+    private ImagenService imagenService;
     
     
     @GetMapping
@@ -151,8 +154,22 @@ public class ProductoController {
             if (byName != null && !byName.isBlank()) return normalizeImageUrl(byName, baseUrl);
         }
 
-        // 3) Si la URL original es Unsplash y hay default, usar default
-        if (original.contains("unsplash.com") || original.contains("images.unsplash")) {
+        // 3) Si la URL original es Unsplash, relativa o vacía, intentar generar con ImagenService
+        if (original.isBlank() || original.startsWith("/") || original.contains("unsplash.com") || original.contains("images.unsplash")) {
+            // Si existe default configurado y queremos forzar su uso en vez de generar, se podría devolver aquí.
+            // Primero intentamos generar una URL confiable con ImagenService
+            if (imagenService != null) {
+                try {
+                    String gen = imagenService.generarImagenParaProducto(producto.getNombre(), producto.getCategory());
+                    if (gen != null && !gen.isBlank()) {
+                        return normalizeImageUrl(gen, baseUrl);
+                    }
+                } catch (Exception ex) {
+                    // Si falla la generación, seguimos al fallback por default abajo
+                }
+            }
+
+            // Si no se pudo generar, usar default si está configurado
             String def = imageMappingsProperties.getDefaultUrl();
             if (def != null && !def.isBlank()) return normalizeImageUrl(def, baseUrl);
         }
