@@ -5,19 +5,30 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "Request para crear una orden. Acepta snake_case y camelCase en campos comunes.", example = "{\"usuario_id\":1,\"es_invitado\":false,\"datos_envio\":{\"nombre_completo\":\"Cliente Uno\",\"email\":\"cliente@correo.com\",\"telefono\":\"987654321\",\"direccion\":\"Av. Siempre Viva 742\",\"ciudad\":\"Santiago\",\"region\":\"RM\",\"codigo_postal\":\"8320000\",\"pais\":\"Chile\",\"metodo_pago\":\"tarjeta\"},\"items\":[{\"producto_id\":1,\"cantidad\":1,\"precio_unitario\":5990}],\"subtotal\":5990,\"total\":5990}")
 public class CrearOrdenRequest {
     
     @JsonProperty("usuario_id")
+    @Schema(description = "ID del usuario que realiza la compra", example = "1")
     private Long usuarioId;
     
     @JsonProperty("es_invitado")
+    @Schema(description = "Indica si el comprador es invitado (sin cuenta)", example = "false")
     private Boolean esInvitado;
     
     @JsonProperty("datos_envio")
+    @Schema(description = "Información de envío del pedido")
     private DatosEnvio datosEnvio;
     
+    @Schema(description = "Lista de items de la orden")
     private List<ItemOrden> items;
+
+    @Schema(description = "Subtotal (suma de sub-totales de items)", example = "5990")
     private Integer subtotal;
+
+    @Schema(description = "Total final de la orden", example = "5990")
     private Integer total;
     
     public CrearOrdenRequest() {
@@ -74,8 +85,10 @@ public class CrearOrdenRequest {
     public static class DatosEnvio {
         @JsonProperty("nombre_completo")
         @JsonAlias({"nombre"})
+        @Schema(description = "Nombre completo del receptor", example = "Cliente Uno")
         private String nombre;
         
+        @Schema(description = "Email de contacto", example = "cliente@correo.com")
         private String email;
         private String telefono;
         private String direccion;
@@ -83,11 +96,14 @@ public class CrearOrdenRequest {
         private String region;
         
         @JsonProperty("codigo_postal")
+        @Schema(description = "Código postal", example = "8320000")
         private String codigoPostal;
         
         @JsonProperty("metodo_pago")
+        @Schema(description = "Método de pago (tarjeta, efectivo, transferencia)", example = "tarjeta")
         private String metodoPago;
         
+        @Schema(description = "País", example = "Chile")
         private String pais;
         
         public DatosEnvio() {
@@ -170,12 +186,15 @@ public class CrearOrdenRequest {
     public static class ItemOrden {
         @JsonProperty("producto_id")
         @JsonAlias({"productoId"})
+        @Schema(description = "ID del producto", example = "1")
         private Integer productoId;
         
+        @Schema(description = "Cantidad solicitada", example = "1")
         private Integer cantidad;
         
         @JsonProperty("precio_unitario")
         @JsonAlias({"precioUnitario"})
+        @Schema(description = "Precio unitario en centavos (o la unidad monetaria usada)", example = "5990")
         private Integer precioUnitario;
         
         public ItemOrden() {

@@ -3,17 +3,30 @@ package com.tiendamascota.dto;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "Detalle de una orden en el historial del usuario", example = "{\"id\":1,\"numeroOrden\":\"ORD-20251117-001\",\"fecha\":\"2025-11-17T20:00:00\",\"estado\":\"completada\",\"subtotal\":5990,\"total\":5990,\"esInvitado\":false,\"usuarioId\":1,\"datosEnvio\":{\"nombre\":\"Cliente Uno\",\"email\":\"cliente@correo.com\",\"telefono\":\"987654321\",\"direccion\":\"Av. Siempre Viva 742\",\"ciudad\":\"Santiago\",\"region\":\"RM\",\"codigoPostal\":\"8320000\",\"metodoPago\":\"tarjeta\"},\"productos\":[{\"productoId\":1,\"nombre\":\"Pelota de Goma\",\"cantidad\":1,\"precioUnitario\":5990,\"imagen\":\"/images/pelota.jpg\"}]}")
 public class OrdenHistorialResponse {
     
+    @Schema(description = "ID de la orden", example = "1")
     private Long id;
+    @Schema(description = "Número de orden", example = "ORD-20251117-001")
     private String numeroOrden;
+    @Schema(description = "Fecha de la orden")
     private LocalDateTime fecha;
+    @Schema(description = "Estado de la orden", example = "completada")
     private String estado;
+    @Schema(description = "Total de la orden", example = "11980")
     private Integer total;
+    @Schema(description = "Subtotal de la orden", example = "5990")
     private Integer subtotal;
+    @Schema(description = "Si la orden fue realizada por invitado", example = "false")
     private Boolean esInvitado;
+    @Schema(description = "ID del usuario propietario de la orden", example = "1")
     private Long usuarioId;
+    @Schema(description = "Datos de envío")
     private DatosEnvioResponse datosEnvio;
+    @Schema(description = "Productos incluidos en la orden")
     private List<ProductoOrdenResponse> productos;
     
     // Constructores
@@ -103,13 +116,17 @@ public class OrdenHistorialResponse {
     
     // Clase interna para datos de envío
     public static class DatosEnvioResponse {
+        @Schema(description = "Nombre de la persona de contacto", example = "Cliente Uno")
         private String nombre;
+        @Schema(description = "Email de contacto", example = "cliente@correo.com")
         private String email;
         private String telefono;
         private String direccion;
         private String ciudad;
         private String region;
+        @Schema(description = "Código postal", example = "8320000")
         private String codigoPostal;
+        @Schema(description = "Método de pago", example = "tarjeta")
         private String metodoPago;
         
         public DatosEnvioResponse() {
@@ -183,10 +200,15 @@ public class OrdenHistorialResponse {
     
     // Clase interna para productos
     public static class ProductoOrdenResponse {
+        @Schema(description = "ID del producto", example = "1")
         private Integer productoId;
+        @Schema(description = "Nombre del producto", example = "Pelota de Goma")
         private String nombre;
+        @Schema(description = "Cantidad comprada", example = "1")
         private Integer cantidad;
+        @Schema(description = "Precio unitario", example = "5990")
         private Integer precioUnitario;
+        @Schema(description = "URL / path de la imagen", example = "/images/pelota.jpg")
         private String imagen;
         
         public ProductoOrdenResponse() {

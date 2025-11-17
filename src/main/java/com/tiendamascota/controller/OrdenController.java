@@ -26,6 +26,10 @@ import com.tiendamascota.repository.OrdenRepository;
 import com.tiendamascota.service.OrdenService;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Profile("local")
@@ -44,9 +48,14 @@ public class OrdenController {
      * Verificar disponibilidad de stock
      */
     @PostMapping("/verificar-stock")
-    @Operation(summary = "Verificar stock disponible", 
-               description = "Verifica si hay stock suficiente para los productos en el carrito")
-    public ResponseEntity<VerificarStockResponse> verificarStock(@RequestBody VerificarStockRequest request) {
+    @Operation(summary = "Verificar stock disponible", description = "Verifica si hay stock suficiente para los productos en el carrito")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Resultado de la verificación",
+            content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "{\"disponible\":true, \"productosAgotados\":[]}"))),
+        @ApiResponse(responseCode = "400", description = "Petición inválida", content = @Content),
+        @ApiResponse(responseCode = "500", description = "Error interno", content = @Content)
+    })
+    public ResponseEntity<VerificarStockResponse> verificarStock(@org.springframework.web.bind.annotation.RequestBody VerificarStockRequest request) {
         try {
             VerificarStockResponse response = ordenService.verificarStock(request);
             return ResponseEntity.ok(response);
@@ -59,9 +68,15 @@ public class OrdenController {
      * Crear orden de compra
      */
     @PostMapping
-    @Operation(summary = "Crear orden de compra", 
-               description = "Crea una nueva orden y actualiza el stock de productos")
-    public ResponseEntity<?> crearOrden(@RequestBody CrearOrdenRequest request) {
+    @Operation(summary = "Crear orden de compra", description = "Crea una nueva orden y actualiza el stock de productos")
+    @ApiResponses({
+        @ApiResponse(responseCode = "201", description = "Orden creada con éxito",
+            content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "{\"mensaje\":\"Orden creada exitosamente\", \"id\":1, \"total\":11980}"))),
+        @ApiResponse(responseCode = "400", description = "Error de validación o stock insuficiente",
+            content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "{\"mensaje\":\"Stock insuficiente para uno o más productos\", \"status\":400}"))),
+        @ApiResponse(responseCode = "500", description = "Error interno", content = @Content)
+    })
+    public ResponseEntity<?> crearOrden(@org.springframework.web.bind.annotation.RequestBody CrearOrdenRequest request) {
         try {
             OrdenResponse response = ordenService.crearOrden(request);
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -77,8 +92,12 @@ public class OrdenController {
      * Obtener historial completo de órdenes de un usuario
      */
     @GetMapping("/usuario/{usuarioId}")
-    @Operation(summary = "Obtener historial de órdenes por usuario", 
-               description = "Retorna todas las órdenes con detalles completos de un usuario específico")
+    @Operation(summary = "Obtener historial de órdenes por usuario", description = "Retorna todas las órdenes con detalles completos de un usuario específico")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Lista de órdenes del usuario", content = @Content(mediaType = "application/json")),
+        @ApiResponse(responseCode = "404", description = "Usuario no encontrado", content = @Content),
+        @ApiResponse(responseCode = "500", description = "Error interno", content = @Content)
+    })
     public ResponseEntity<?> obtenerHistorialOrdenes(@PathVariable Long usuarioId) {
         try {
             List<OrdenHistorialResponse> ordenes = ordenService.obtenerHistorialOrdenes(usuarioId);
@@ -96,6 +115,10 @@ public class OrdenController {
      */
     @GetMapping
     @Operation(summary = "Listar órdenes", description = "Retorna todas las órdenes")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Listado de órdenes", content = @Content(mediaType = "application/json")),
+        @ApiResponse(responseCode = "500", description = "Error interno", content = @Content)
+    })
     public ResponseEntity<?> listarTodas() {
         try {
             List<Orden> ordenes = ordenRepository.findAllWithItems();
@@ -113,6 +136,11 @@ public class OrdenController {
      */
     @GetMapping("/{id}")
     @Operation(summary = "Obtener orden por ID", description = "Retorna una orden por su ID")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Orden encontrada", content = @Content(mediaType = "application/json")),
+        @ApiResponse(responseCode = "404", description = "Orden no encontrada", content = @Content),
+        @ApiResponse(responseCode = "500", description = "Error interno", content = @Content)
+    })
     public ResponseEntity<?> obtenerPorId(@PathVariable Long id) {
         try {
             java.util.Optional<Orden> opt = ordenRepository.findByIdWithItems(id);
