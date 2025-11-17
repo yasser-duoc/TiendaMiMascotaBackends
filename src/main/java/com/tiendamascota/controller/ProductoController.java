@@ -175,31 +175,36 @@ public class ProductoController {
                description = "Actualiza productos sin imagen usando Unsplash API")
     public ResponseEntity<?> generarImagenesExistentes() {
         try {
-            // Buscar productos sin imagen o con rutas locales
-            List<Producto> productosSinImagen = productoRepository.findByImageUrlIsNullOrImageUrlEquals("");
-            
-            // También incluir productos con rutas locales /images/
+            // Buscar TODOS los productos para regenerar imágenes
             List<Producto> todosProductos = productoRepository.findAll();
-            List<Producto> productosRutasLocales = todosProductos.stream()
-                .filter(p -> p.getImageUrl() != null && p.getImageUrl().startsWith("/images/"))
-                .toList();
             
-            // Combinar ambas listas
-            List<Producto> productosActualizar = new java.util.ArrayList<>(productosSinImagen);
-            productosActualizar.addAll(productosRutasLocales);
+            System.out.println("🔍 Total de productos encontrados: " + todosProductos.size());
             
             int contador = 0;
-            for (Producto p : productosActualizar) {
-                String imagen = imagenService.generarImagenParaProducto(p.getNombre(), p.getCategory());
-                p.setImageUrl(imagen);
-                productoRepository.save(p);
-                contador++;
-                System.out.println("✅ Imagen generada para: " + p.getNombre() + " → " + imagen);
+            for (Producto p : todosProductos) {
+                System.out.println("📦 Procesando: " + p.getNombre() + " | ImageURL actual: " + p.getImageUrl());
+                
+                // Regenerar imagen siempre (o solo si es null/vacío/local)
+                boolean necesitaActualizar = p.getImageUrl() == null || 
+                                           p.getImageUrl().isEmpty() || 
+                                           p.getImageUrl().startsWith("/images/") ||
+                                           !p.getImageUrl().startsWith("http");
+                
+                if (necesitaActualizar) {
+                    String imagen = imagenService.generarImagenParaProducto(p.getNombre(), p.getCategory());
+                    p.setImageUrl(imagen);
+                    productoRepository.save(p);
+                    contador++;
+                    System.out.println("✅ Imagen generada para: " + p.getNombre() + " → " + imagen);
+                } else {
+                    System.out.println("⏭️ Producto ya tiene imagen válida: " + p.getNombre());
+                }
             }
             
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", "Imágenes generadas exitosamente desde Unsplash");
             response.put("productosActualizados", contador);
+            response.put("productosTotal", todosProductos.size());
             response.put("timestamp", java.time.LocalDateTime.now());
             
             return ResponseEntity.ok(response);
@@ -207,6 +212,7 @@ public class ProductoController {
             Map<String, Object> error = new HashMap<>();
             error.put("mensaje", "Error al generar imágenes: " + e.getMessage());
             error.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            error.put("errorDetail", e.toString());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
