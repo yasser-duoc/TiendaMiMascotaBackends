@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import com.tiendamascota.config.ImageMappingsProperties;
 import com.tiendamascota.dto.VerificarStockRequest;
 import com.tiendamascota.dto.VerificarStockResponse;
 import com.tiendamascota.model.Producto;
@@ -38,6 +39,8 @@ public class ProductoController {
     
     @Autowired
     private OrdenService ordenService;
+    @Autowired
+    private ImageMappingsProperties imageMappingsProperties;
     
     
     @GetMapping
@@ -45,9 +48,9 @@ public class ProductoController {
     public ResponseEntity<List<Producto>> obtenerTodos() {
         try {
             List<Producto> productos = productoRepository.findAll();
-            // Normalizar URLs de imagen (devuelven URL absolutas para clientes)
+            // Normalizar/Resolver URLs de imagen (devuelven URL absolutas para clientes)
             String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
-            productos.forEach(p -> p.setImageUrl(normalizeImageUrl(p.getImageUrl(), baseUrl)));
+            productos.forEach(p -> p.setImageUrl(resolveImageUrl(p, baseUrl)));
             return ResponseEntity.ok(productos);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
@@ -62,7 +65,7 @@ public class ProductoController {
             
             if (producto.isPresent()) {
                 String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
-                producto.get().setImageUrl(normalizeImageUrl(producto.get().getImageUrl(), baseUrl));
+                producto.get().setImageUrl(resolveImageUrl(producto.get(), baseUrl));
                 return ResponseEntity.ok(producto.get());
             } else {
                 Map<String, Object> error = new HashMap<>();
@@ -83,7 +86,7 @@ public class ProductoController {
     public ResponseEntity<List<Producto>> obtenerPorCategoria(@PathVariable String categoria) {
         List<Producto> productos = productoRepository.findByCategory(categoria);
         String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
-        productos.forEach(p -> p.setImageUrl(normalizeImageUrl(p.getImageUrl(), baseUrl)));
+        productos.forEach(p -> p.setImageUrl(resolveImageUrl(p, baseUrl)));
         return ResponseEntity.ok(productos);
     }
 
@@ -123,6 +126,39 @@ public class ProductoController {
         }
 
         return url;
+    }
+
+    /**
+     * Resuelve la URL final de la imagen para un producto.
+     * - Si existe un mapeo (por id o por slug de nombre) lo usa.
+     * - Si la URL original proviene de Unsplash y no hay mapeo, usa default si está configurado.
+     * - En otros casos aplica `normalizeImageUrl`.
+     */
+    private String resolveImageUrl(Producto producto, String baseUrl) {
+        String original = producto.getImageUrl();
+        if (original == null) return null;
+
+        // 1) Intentar mapeo por ID
+        if (producto.getId() != null && imageMappingsProperties.getMappings() != null) {
+            String byId = imageMappingsProperties.getMappings().get(String.valueOf(producto.getId()));
+            if (byId != null && !byId.isBlank()) return normalizeImageUrl(byId, baseUrl);
+        }
+
+        // 2) Intentar mapeo por slug del nombre
+        if (producto.getNombre() != null && imageMappingsProperties.getMappings() != null) {
+            String slug = producto.getNombre().toLowerCase().replaceAll("[^a-z0-9]+", "-").replaceAll("(^-|-$)", "");
+            String byName = imageMappingsProperties.getMappings().get(slug);
+            if (byName != null && !byName.isBlank()) return normalizeImageUrl(byName, baseUrl);
+        }
+
+        // 3) Si la URL original es Unsplash y hay default, usar default
+        if (original.contains("unsplash.com") || original.contains("images.unsplash")) {
+            String def = imageMappingsProperties.getDefaultUrl();
+            if (def != null && !def.isBlank()) return normalizeImageUrl(def, baseUrl);
+        }
+
+        // 4) En otros casos, devolver la url original normalizada
+        return normalizeImageUrl(original, baseUrl);
     }
     
     @PostMapping
