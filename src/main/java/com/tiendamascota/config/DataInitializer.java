@@ -14,6 +14,17 @@ public class DataInitializer {
     @SuppressWarnings("all")
     public CommandLineRunner initDatabase(ProductoRepository repo) {
         return args -> {
+            // VERIFICAR SI YA HAY PRODUCTOS
+            long count = repo.count();
+            
+            if (count > 0) {
+                System.out.println("⚠️ Ya existen " + count + " productos en la base de datos. Omitiendo inserción inicial.");
+                return; // NO insertar si ya hay datos
+            }
+            
+            // Solo insertar si la base de datos está vacía
+            System.out.println("📦 Base de datos vacía. Insertando 18 productos iniciales...");
+            
             // Alimento
             repo.save(crearProducto("Alimento Premium para Perros", 25990, "Alimento", 
                 "Alimento completo y balanceado con ingredientes naturales para perros adultos de todas las razas.", 
