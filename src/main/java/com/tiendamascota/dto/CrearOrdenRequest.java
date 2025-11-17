@@ -2,6 +2,7 @@ package com.tiendamascota.dto;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class CrearOrdenRequest {
@@ -72,6 +73,7 @@ public class CrearOrdenRequest {
     
     public static class DatosEnvio {
         @JsonProperty("nombre_completo")
+        @JsonAlias({"nombre"})
         private String nombre;
         
         private String email;
@@ -167,11 +169,13 @@ public class CrearOrdenRequest {
     
     public static class ItemOrden {
         @JsonProperty("producto_id")
+        @JsonAlias({"productoId"})
         private Integer productoId;
         
         private Integer cantidad;
         
         @JsonProperty("precio_unitario")
+        @JsonAlias({"precioUnitario"})
         private Integer precioUnitario;
         
         public ItemOrden() {
