@@ -5,10 +5,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -33,10 +31,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
-@Profile("local")
+// @Profile("local")
 @RestController
 @RequestMapping("/api/productos")
-@CrossOrigin(origins = "*")
+// @CrossOrigin(origins = "*")
 @Tag(name = "Productos", description = "API de gestión de productos")
 public class ProductoController {
     
@@ -45,9 +43,9 @@ public class ProductoController {
     
     @Autowired
     private OrdenService ordenService;
-    @Autowired
+    @Autowired(required = false)
     private ImageMappingsProperties imageMappingsProperties;
-    @Autowired
+    @Autowired(required = false)
     private ImagenService imagenService;
     
     
@@ -156,13 +154,13 @@ public class ProductoController {
         if (original == null) return null;
 
         // 1) Intentar mapeo por ID
-        if (producto.getId() != null && imageMappingsProperties.getMappings() != null) {
+        if (producto.getId() != null && imageMappingsProperties != null && imageMappingsProperties.getMappings() != null) {
             String byId = imageMappingsProperties.getMappings().get(String.valueOf(producto.getId()));
             if (byId != null && !byId.isBlank()) return normalizeImageUrl(byId, baseUrl);
         }
 
         // 2) Intentar mapeo por slug del nombre
-        if (producto.getNombre() != null && imageMappingsProperties.getMappings() != null) {
+        if (producto.getNombre() != null && imageMappingsProperties != null && imageMappingsProperties.getMappings() != null) {
             String slug = producto.getNombre().toLowerCase().replaceAll("[^a-z0-9]+", "-").replaceAll("(^-|-$)", "");
             String byName = imageMappingsProperties.getMappings().get(slug);
             if (byName != null && !byName.isBlank()) return normalizeImageUrl(byName, baseUrl);
@@ -184,7 +182,7 @@ public class ProductoController {
             }
 
             // Si no se pudo generar, usar default si está configurado
-            String def = imageMappingsProperties.getDefaultUrl();
+            String def = imageMappingsProperties != null ? imageMappingsProperties.getDefaultUrl() : null;
             if (def != null && !def.isBlank()) return normalizeImageUrl(def, baseUrl);
         }
 

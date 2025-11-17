@@ -5,6 +5,7 @@ import java.util.Arrays;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -67,16 +68,35 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authz -> authz
+                // Public endpoints
                 .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/api/productos/**").permitAll()
-                .requestMatchers("/api/usuarios/**").permitAll()
-                .requestMatchers("/api/ordenes/**").permitAll()
-                .requestMatchers("/productos/**").permitAll()
-                .requestMatchers("/ordenes/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/productos/**").permitAll()
+                .requestMatchers(HttpMethod.OPTIONS, "/api/productos/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/usuarios/**").permitAll()
+                .requestMatchers(HttpMethod.OPTIONS, "/api/usuarios/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/ordenes/**").permitAll()
+                .requestMatchers(HttpMethod.OPTIONS, "/api/ordenes/**").permitAll()
+
+                // Require authentication for write operations
+                .requestMatchers(HttpMethod.POST, "/api/productos/**").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/api/productos/**").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/api/productos/**").authenticated()
+
+                .requestMatchers(HttpMethod.POST, "/api/usuarios/**").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/api/usuarios/**").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/api/usuarios/**").authenticated()
+
+                .requestMatchers(HttpMethod.POST, "/api/ordenes/**").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/api/ordenes/**").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/api/ordenes/**").authenticated()
+
+                // Swagger / OpenAPI
                 .requestMatchers("/swagger-ui.html").permitAll()
                 .requestMatchers("/swagger-ui/**").permitAll()
                 .requestMatchers("/v3/api-docs").permitAll()
                 .requestMatchers("/v3/api-docs/**").permitAll()
+
+                // Keep other routes unchanged (conservative)
                 .anyRequest().permitAll()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
