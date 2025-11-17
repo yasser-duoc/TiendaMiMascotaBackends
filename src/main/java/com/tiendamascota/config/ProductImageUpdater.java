@@ -1,6 +1,7 @@
 package com.tiendamascota.config;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
@@ -77,7 +78,7 @@ public class ProductImageUpdater {
                         newUrl = imageMappingsProperties.getDefaultUrl();
                     }
 
-                    if (StringUtils.hasText(newUrl) && !newUrl.equals(original)) {
+                    if (StringUtils.hasText(newUrl) && !Objects.equals(newUrl, original)) {
                         p.setImageUrl(newUrl);
                         repo.save(p);
                         updated++;

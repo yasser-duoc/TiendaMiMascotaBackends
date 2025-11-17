@@ -17,6 +17,9 @@ public class ImageMappingsProperties {
 
     /** URL por defecto si no hay mapping para un producto */
     private String defaultUrl;
+    
+    /** Flag para activar la actualización de imágenes al iniciar (image.update-on-startup) */
+    private boolean updateOnStartup = false;
 
     public Map<String, String> getMappings() {
         return mappings;
@@ -32,5 +35,13 @@ public class ImageMappingsProperties {
 
     public void setDefaultUrl(String defaultUrl) {
         this.defaultUrl = defaultUrl;
+    }
+
+    public boolean isUpdateOnStartup() {
+        return updateOnStartup;
+    }
+
+    public void setUpdateOnStartup(boolean updateOnStartup) {
+        this.updateOnStartup = updateOnStartup;
     }
 }

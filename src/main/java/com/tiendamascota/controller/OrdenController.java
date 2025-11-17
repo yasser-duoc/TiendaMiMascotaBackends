@@ -98,7 +98,7 @@ public class OrdenController {
         @ApiResponse(responseCode = "404", description = "Usuario no encontrado", content = @Content),
         @ApiResponse(responseCode = "500", description = "Error interno", content = @Content)
     })
-    public ResponseEntity<?> obtenerHistorialOrdenes(@PathVariable Long usuarioId) {
+    public ResponseEntity<?> obtenerHistorialOrdenes(@PathVariable long usuarioId) {
         try {
             List<OrdenHistorialResponse> ordenes = ordenService.obtenerHistorialOrdenes(usuarioId);
             return ResponseEntity.ok(ordenes);
@@ -141,7 +141,7 @@ public class OrdenController {
         @ApiResponse(responseCode = "404", description = "Orden no encontrada", content = @Content),
         @ApiResponse(responseCode = "500", description = "Error interno", content = @Content)
     })
-    public ResponseEntity<?> obtenerPorId(@PathVariable Long id) {
+    public ResponseEntity<?> obtenerPorId(@PathVariable long id) {
         try {
             java.util.Optional<Orden> opt = ordenRepository.findByIdWithItems(id);
             if (opt.isPresent()) {
@@ -165,7 +165,7 @@ public class OrdenController {
      */
     @org.springframework.web.bind.annotation.PutMapping("/{id}")
     @Operation(summary = "Actualizar orden", description = "Actualiza una orden existente")
-    public ResponseEntity<?> actualizarOrden(@PathVariable Long id, @RequestBody Orden ordenActualizada) {
+    public ResponseEntity<?> actualizarOrden(@PathVariable long id, @RequestBody Orden ordenActualizada) {
         try {
             java.util.Optional<Orden> opt = ordenRepository.findById(id);
             if (opt.isPresent()) {
@@ -203,7 +203,7 @@ public class OrdenController {
      */
     @org.springframework.web.bind.annotation.DeleteMapping("/{id}")
     @Operation(summary = "Eliminar orden", description = "Elimina una orden por su ID")
-    public ResponseEntity<?> eliminarOrden(@PathVariable Long id) {
+    public ResponseEntity<?> eliminarOrden(@PathVariable long id) {
         try {
             if (ordenRepository.existsById(id)) {
                 ordenRepository.deleteById(id);
