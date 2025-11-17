@@ -1,171 +1,105 @@
 package com.tiendamascota.service;
 
-import java.util.Map;
-
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-
-import com.tiendamascota.dto.UnsplashResponse;
 
 @Service
 public class ImagenService {
     
-    @Value("${unsplash.access.key}")
-    private String accessKey;
-    
-    private static final String UNSPLASH_API_URL = "https://api.unsplash.com/search/photos";
-    private final RestTemplate restTemplate = new RestTemplate();
-    
     /**
-     * Genera URL de imagen automáticamente según el nombre del producto
+     * Genera URL de imagen específica según el nombre exacto del producto
+     * Usando imágenes directas y confiables sin APIs externas
      */
     public String generarImagenParaProducto(String nombreProducto, String categoria) {
-        try {
-            String keywords = extraerKeywords(nombreProducto, categoria);
-            
-            // Agregar más parámetros para mejorar relevancia
-            String url = String.format("%s?query=%s&client_id=%s&per_page=1&orientation=squarish&order_by=relevant",
-                UNSPLASH_API_URL, 
-                keywords.replace(" ", "%20"), // URL encode espacios
-                accessKey != null ? accessKey : ""
-            );
-            
-            UnsplashResponse response = restTemplate.getForObject(url, UnsplashResponse.class);
-            
-            if (response != null && response.getResults() != null && !response.getResults().isEmpty()) {
-                return response.getResults().get(0).getUrls().getSmall(); // URL 400x400
-            }
-        } catch (RuntimeException e) {
-            System.err.println("Error generando imagen desde Unsplash: " + e.getMessage());
+        String nombre = nombreProducto.toLowerCase().trim();
+        
+        // === MAPEO DIRECTO POR NOMBRE DE PRODUCTO ===
+        
+        // ALIMENTOS
+        if (nombre.contains("alimento") && nombre.contains("perro")) {
+            return "https://images.pexels.com/photos/7210754/pexels-photo-7210754.jpeg?auto=compress&cs=tinysrgb&w=400";
+        }
+        if (nombre.contains("alimento") && nombre.contains("gato")) {
+            return "https://images.pexels.com/photos/6853522/pexels-photo-6853522.jpeg?auto=compress&cs=tinysrgb&w=400";
         }
         
-        return obtenerImagenPorDefecto(categoria);
-    }
-    
-    /**
-     * Extrae palabras clave en inglés MÁS ESPECÍFICAS para buscar en Unsplash
-     */
-    private String extraerKeywords(String nombreProducto, String categoria) {
-        String nombre = nombreProducto.toLowerCase();
-        
-        // === ALIMENTOS ===
-        if (nombre.contains("alimento") || nombre.contains("comida") || nombre.contains("premium")) {
-            if (nombre.contains("perro") || nombre.contains("perros")) {
-                return "dog food bowl kibble"; // Más específico
+        // SNACKS/PREMIOS
+        if (nombre.contains("snack") || nombre.contains("premio") || nombre.contains("golosina")) {
+            if (nombre.contains("perro")) {
+                return "https://images.pexels.com/photos/7210490/pexels-photo-7210490.jpeg?auto=compress&cs=tinysrgb&w=400";
             }
-            if (nombre.contains("gato") || nombre.contains("gatos")) {
-                return "cat food bowl kibble"; // Más específico
+            if (nombre.contains("gato")) {
+                return "https://images.pexels.com/photos/7210745/pexels-photo-7210745.jpeg?auto=compress&cs=tinysrgb&w=400";
             }
-            return "pet food bowl product";
         }
         
-        // === SNACKS/PREMIOS ===
-        if (nombre.contains("snack") || nombre.contains("premio") || nombre.contains("golosina") || nombre.contains("galleta")) {
-            if (nombre.contains("perro") || nombre.contains("perros")) {
-                return "dog treats bones snacks"; // Específico para premios
-            }
-            if (nombre.contains("gato") || nombre.contains("gatos")) {
-                return "cat treats snacks";
-            }
-            return "pet treats snacks";
+        // JUGUETES
+        if (nombre.contains("pelota")) {
+            return "https://images.pexels.com/photos/4588047/pexels-photo-4588047.jpeg?auto=compress&cs=tinysrgb&w=400";
+        }
+        if (nombre.contains("cuerda")) {
+            return "https://images.pexels.com/photos/5731889/pexels-photo-5731889.jpeg?auto=compress&cs=tinysrgb&w=400";
+        }
+        if (nombre.contains("juguete") && nombre.contains("gato")) {
+            return "https://images.pexels.com/photos/1440387/pexels-photo-1440387.jpeg?auto=compress&cs=tinysrgb&w=400";
         }
         
-        // === JUGUETES ===
-        if (nombre.contains("pelota") || nombre.contains("ball")) {
-            return "dog toy ball play"; // Pelota de juguete
-        }
-        if (nombre.contains("cuerda") || nombre.contains("rope")) {
-            return "dog rope toy play"; // Cuerda de juego
-        }
-        if (nombre.contains("juguete")) {
-            if (nombre.contains("perro") || nombre.contains("perros")) {
-                return "dog toy play product";
-            }
-            if (nombre.contains("gato") || nombre.contains("gatos")) {
-                return "cat toy play product";
-            }
-            return "pet toy play";
-        }
-        
-        // === ACCESORIOS ===
+        // ACCESORIOS
         if (nombre.contains("collar")) {
-            if (nombre.contains("gato")) {
-                return "cat collar accessory";
-            }
-            return "dog collar leash accessory"; // Collar específico
+            return "https://images.pexels.com/photos/6853515/pexels-photo-6853515.jpeg?auto=compress&cs=tinysrgb&w=400";
         }
-        if (nombre.contains("correa") || nombre.contains("leash")) {
-            return "dog leash walk accessory"; // Correa específica
+        if (nombre.contains("correa")) {
+            return "https://images.pexels.com/photos/7210655/pexels-photo-7210655.jpeg?auto=compress&cs=tinysrgb&w=400";
         }
-        if (nombre.contains("cama") || nombre.contains("bed")) {
-            if (nombre.contains("gato")) {
-                return "cat bed sleep cushion";
-            }
-            return "dog bed sleep cushion"; // Cama específica
+        if (nombre.contains("cama")) {
+            return "https://images.pexels.com/photos/4588056/pexels-photo-4588056.jpeg?auto=compress&cs=tinysrgb&w=400";
         }
-        if (nombre.contains("comedero") || nombre.contains("bowl") || nombre.contains("plato")) {
-            return "pet food bowl dish"; // Comedero específico
+        if (nombre.contains("comedero") || nombre.contains("plato")) {
+            return "https://images.pexels.com/photos/5745189/pexels-photo-5745189.jpeg?auto=compress&cs=tinysrgb&w=400";
         }
-        if (nombre.contains("bebedero") || nombre.contains("fuente") || nombre.contains("water")) {
-            return "pet water fountain bowl"; // Bebedero específico
+        if (nombre.contains("bebedero")) {
+            return "https://images.pexels.com/photos/6853511/pexels-photo-6853511.jpeg?auto=compress&cs=tinysrgb&w=400";
         }
-        if (nombre.contains("transportadora") || nombre.contains("carrier")) {
-            return "pet carrier transport crate"; // Transportadora específica
+        if (nombre.contains("transportadora")) {
+            return "https://images.pexels.com/photos/5731793/pexels-photo-5731793.jpeg?auto=compress&cs=tinysrgb&w=400";
         }
         
-        // === HIGIENE ===
+        // HIGIENE
         if (nombre.contains("shampoo") || nombre.contains("champú")) {
-            return "pet shampoo grooming bottle"; // Shampoo específico
+            return "https://images.pexels.com/photos/6489074/pexels-photo-6489074.jpeg?auto=compress&cs=tinysrgb&w=400";
         }
-        if (nombre.contains("cepillo") || nombre.contains("brush")) {
-            return "pet brush grooming tool"; // Cepillo específico
+        if (nombre.contains("cepillo")) {
+            return "https://images.pexels.com/photos/6816861/pexels-photo-6816861.jpeg?auto=compress&cs=tinysrgb&w=400";
         }
-        if (nombre.contains("toallita") || nombre.contains("wipe")) {
-            return "pet wipes cleaning"; // Toallitas específicas
-        }
-        
-        // === MEDICAMENTOS ===
-        if (nombre.contains("antipulgas") || nombre.contains("pulga") || nombre.contains("garrapata")) {
-            return "pet medicine flea treatment"; // Antipulgas específico
-        }
-        if (nombre.contains("vitamina") || nombre.contains("supplement")) {
-            return "pet vitamins supplement bottle"; // Vitaminas específicas
-        }
-        if (nombre.contains("desparasitante") || nombre.contains("parasit")) {
-            return "pet medicine pills treatment"; // Desparasitante específico
+        if (nombre.contains("toallita")) {
+            return "https://images.pexels.com/photos/7210339/pexels-photo-7210339.jpeg?auto=compress&cs=tinysrgb&w=400";
         }
         
-        // === FALLBACK POR ANIMAL ===
-        if (nombre.contains("perro") || nombre.contains("perros")) {
-            return "dog product accessory";
+        // MEDICAMENTOS
+        if (nombre.contains("antipulgas") || nombre.contains("pulga")) {
+            return "https://images.pexels.com/photos/5731769/pexels-photo-5731769.jpeg?auto=compress&cs=tinysrgb&w=400";
         }
-        if (nombre.contains("gato") || nombre.contains("gatos")) {
-            return "cat product accessory";
+        if (nombre.contains("vitamina")) {
+            return "https://images.pexels.com/photos/6489073/pexels-photo-6489073.jpeg?auto=compress&cs=tinysrgb&w=400";
+        }
+        if (nombre.contains("desparasitante")) {
+            return "https://images.pexels.com/photos/5731766/pexels-photo-5731766.jpeg?auto=compress&cs=tinysrgb&w=400";
         }
         
-        // === FALLBACK POR CATEGORÍA ===
-        return switch (categoria) {
-            case "Alimento" -> "pet food bowl product";
-            case "Juguetes" -> "pet toy play colorful";
-            case "Accesorios" -> "pet accessories supplies";
-            case "Higiene" -> "pet grooming supplies";
-            case "Medicamentos" -> "pet medicine treatment";
-            default -> "pet supplies product";
-        };
+        // FALLBACK POR CATEGORÍA
+        return obtenerImagenPorCategoria(categoria);
     }
     
     /**
-     * Imágenes por defecto MEJORADAS si falla Unsplash
+     * Imágenes por categoría usando Pexels (sin API, URLs directas)
      */
-    private String obtenerImagenPorDefecto(String categoria) {
-        Map<String, String> defaults = Map.of(
-            "Alimento", "https://images.unsplash.com/photo-1589924691995-400dc9ecc119?w=400", // Bowl con comida
-            "Juguetes", "https://images.unsplash.com/photo-1535294435445-d7249524ef2e?w=400", // Juguetes coloridos
-            "Accesorios", "https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=400", // Collar
-            "Higiene", "https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=400", // Productos de baño
-            "Medicamentos", "https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=400" // Medicinas
-        );
-        return defaults.getOrDefault(categoria, "https://images.unsplash.com/photo-1450778869180-41d0601e046e?w=400");
+    private String obtenerImagenPorCategoria(String categoria) {
+        return switch (categoria) {
+            case "Alimento" -> "https://images.pexels.com/photos/7210754/pexels-photo-7210754.jpeg?auto=compress&cs=tinysrgb&w=400";
+            case "Juguetes" -> "https://images.pexels.com/photos/4588047/pexels-photo-4588047.jpeg?auto=compress&cs=tinysrgb&w=400";
+            case "Accesorios" -> "https://images.pexels.com/photos/6853515/pexels-photo-6853515.jpeg?auto=compress&cs=tinysrgb&w=400";
+            case "Higiene" -> "https://images.pexels.com/photos/6489074/pexels-photo-6489074.jpeg?auto=compress&cs=tinysrgb&w=400";
+            case "Medicamentos" -> "https://images.pexels.com/photos/5731769/pexels-photo-5731769.jpeg?auto=compress&cs=tinysrgb&w=400";
+            default -> "https://images.pexels.com/photos/406014/pexels-photo-406014.jpeg?auto=compress&cs=tinysrgb&w=400";
+        };
     }
 }
