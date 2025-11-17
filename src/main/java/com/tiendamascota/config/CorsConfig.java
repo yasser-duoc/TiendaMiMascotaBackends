@@ -29,5 +29,13 @@ public class CorsConfig implements WebMvcConfigurer {
                 .allowedHeaders("*")
                 .allowCredentials(true)
                 .maxAge(3600);
+        
+        // Also allow legacy /productos/* paths (frontend may call without /api prefix)
+        registry.addMapping("/productos/**")
+            .allowedOrigins(origins.length == 0 ? new String[] {"https://tienda-mi-mascota.vercel.app"} : origins)
+            .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+            .allowedHeaders("*")
+            .allowCredentials(true)
+            .maxAge(3600);
     }
 }
