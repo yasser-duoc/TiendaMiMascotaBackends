@@ -21,7 +21,6 @@ import com.tiendamascota.dto.VerificarStockRequest;
 import com.tiendamascota.dto.VerificarStockResponse;
 import com.tiendamascota.model.Producto;
 import com.tiendamascota.repository.ProductoRepository;
-import com.tiendamascota.service.ImagenService;
 import com.tiendamascota.service.OrdenService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -39,8 +38,6 @@ public class ProductoController {
     @Autowired
     private OrdenService ordenService;
     
-    @Autowired
-    private ImagenService imagenService;
     
     @GetMapping
     @Operation(summary = "Obtener todos los productos", description = "Retorna una lista de todos los productos")
@@ -167,94 +164,7 @@ public class ProductoController {
         }
     }
     
-    /**
-     * Genera imágenes automáticamente para productos que no tienen
-     */
-    @PostMapping("/generar-imagenes")
-    @Operation(summary = "Generar imágenes para productos sin imagen", 
-               description = "Actualiza productos sin imagen usando Unsplash API")
-    public ResponseEntity<?> generarImagenesExistentes() {
-        try {
-            // Buscar TODOS los productos para regenerar imágenes
-            List<Producto> todosProductos = productoRepository.findAll();
-            
-            System.out.println("🔍 Total de productos encontrados: " + todosProductos.size());
-            
-            int contador = 0;
-            for (Producto p : todosProductos) {
-                System.out.println("📦 Procesando: " + p.getNombre() + " | ImageURL actual: " + p.getImageUrl());
-                
-                // Regenerar imagen siempre (o solo si es null/vacío/local)
-                boolean necesitaActualizar = p.getImageUrl() == null || 
-                                           p.getImageUrl().isEmpty() || 
-                                           p.getImageUrl().startsWith("/images/") ||
-                                           !p.getImageUrl().startsWith("http");
-                
-                if (necesitaActualizar) {
-                    String imagen = imagenService.generarImagenParaProducto(p.getNombre(), p.getCategory());
-                    p.setImageUrl(imagen);
-                    productoRepository.save(p);
-                    contador++;
-                    System.out.println("✅ Imagen generada para: " + p.getNombre() + " → " + imagen);
-                } else {
-                    System.out.println("⏭️ Producto ya tiene imagen válida: " + p.getNombre());
-                }
-            }
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("mensaje", "Imágenes generadas exitosamente desde Unsplash");
-            response.put("productosActualizados", contador);
-            response.put("productosTotal", todosProductos.size());
-            response.put("timestamp", java.time.LocalDateTime.now());
-            
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            Map<String, Object> error = new HashMap<>();
-            error.put("mensaje", "Error al generar imágenes: " + e.getMessage());
-            error.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-            error.put("errorDetail", e.toString());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
-        }
-    }
+    // Endpoints de generación de imágenes removidos — se usan URLs directas ahora.
     
-    /**
-     * FORZAR regeneración de TODAS las imágenes (usar solo cuando sea necesario)
-     */
-    @PostMapping("/forzar-regenerar-imagenes")
-    @Operation(summary = "Forzar regeneración de todas las imágenes", 
-               description = "Regenera imágenes de TODOS los productos sin importar su estado actual")
-    public ResponseEntity<?> forzarRegenerarImagenes() {
-        try {
-            List<Producto> todosProductos = productoRepository.findAll();
-            
-            System.out.println("🔄 FORZANDO regeneración de " + todosProductos.size() + " productos");
-            
-            int contador = 0;
-            for (Producto p : todosProductos) {
-                System.out.println("📦 Regenerando: " + p.getNombre() + " | Categoría: " + p.getCategory());
-                
-                String imagen = imagenService.generarImagenParaProducto(p.getNombre(), p.getCategory());
-                String imagenAnterior = p.getImageUrl();
-                p.setImageUrl(imagen);
-                productoRepository.save(p);
-                contador++;
-                System.out.println("✅ ANTES: " + imagenAnterior);
-                System.out.println("✅ AHORA: " + imagen);
-            }
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("mensaje", "TODAS las imágenes fueron regeneradas desde Unsplash");
-            response.put("productosActualizados", contador);
-            response.put("productosTotal", todosProductos.size());
-            response.put("timestamp", java.time.LocalDateTime.now());
-            
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            Map<String, Object> error = new HashMap<>();
-            error.put("mensaje", "Error al regenerar imágenes: " + e.getMessage());
-            error.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-            error.put("errorDetail", e.toString());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
-        }
-    }
+    // Endpoint de forzado removido — use `ProductoController` normal para editar imágenes.
 }
