@@ -125,39 +125,4 @@ public class ProductoController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
         }
     }
-    
-    /**
-     * ENDPOINT TEMPORAL - Eliminar después de limpiar duplicados
-     * Elimina productos duplicados manteniendo solo los primeros 18
-     */
-    @PostMapping("/limpiar-duplicados")
-    @Operation(summary = "Limpiar productos duplicados", description = "TEMPORAL: Elimina productos con ID > 18")
-    public ResponseEntity<?> limpiarDuplicados() {
-        try {
-            long countBefore = productoRepository.count();
-            
-            // Obtener todos los productos con ID > 18
-            List<Producto> duplicados = productoRepository.findAll().stream()
-                .filter(p -> p.getId() != null && p.getId() > 18)
-                .toList();
-            
-            // Eliminar duplicados
-            productoRepository.deleteAll(duplicados);
-            
-            long countAfter = productoRepository.count();
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("mensaje", "Productos duplicados eliminados exitosamente");
-            response.put("productosBefore", countBefore);
-            response.put("productosAfter", countAfter);
-            response.put("productosEliminados", countBefore - countAfter);
-            
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            Map<String, Object> error = new HashMap<>();
-            error.put("mensaje", "Error al limpiar duplicados: " + e.getMessage());
-            error.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
-        }
-    }
 }
