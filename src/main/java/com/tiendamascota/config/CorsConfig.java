@@ -3,6 +3,8 @@ package com.tiendamascota.config;
 import java.util.Arrays;
 import java.util.Objects;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.lang.NonNull;
@@ -12,7 +14,9 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class CorsConfig implements WebMvcConfigurer {
 
-    @Value("${app.cors.allowed-origins:https://tienda-mi-mascota.vercel.app,http://localhost:5173,http://localhost:3000,http://10.0.2.2:8080}")
+    private static final Logger logger = LoggerFactory.getLogger(CorsConfig.class);
+
+    @Value("${app.cors.allowed-origins:https://tienda-mi-mascota.vercel.app}")
     private String allowedOrigins;
 
     @Override
@@ -20,8 +24,10 @@ public class CorsConfig implements WebMvcConfigurer {
         String allowed = Objects.requireNonNullElse(allowedOrigins, "");
         String[] origins = Arrays.stream(allowed.split(","))
                 .map(String::trim)
-                .filter(s -> !s.isEmpty())
+                .filter(s -> !s.isEmpty() && !s.equals("*")) // Explicitly filter out "*" to prevent errors
                 .toArray(String[]::new);
+
+        logger.info("CORS Configuration - Allowed Origins: {}", Arrays.toString(origins));
 
         registry.addMapping("/api/**")
                 .allowedOriginPatterns(origins.length == 0 ? new String[] {"https://tienda-mi-mascota.vercel.app"} : origins)
