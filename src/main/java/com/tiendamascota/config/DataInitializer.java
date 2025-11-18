@@ -1,6 +1,7 @@
 package com.tiendamascota.config;
 
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -11,6 +12,7 @@ import com.tiendamascota.repository.ProductoRepository;
 public class DataInitializer {
     
     @Bean
+    @ConditionalOnProperty(prefix = "app.data", name = "init-enabled", havingValue = "true", matchIfMissing = false)
     @SuppressWarnings("all")
     public CommandLineRunner initDatabase(ProductoRepository repo) {
         return args -> {

@@ -120,4 +120,39 @@ public class AuthService {
         
         return userData;
     }
+    
+    /**
+     * Refrescar token JWT
+     */
+    public AuthResponse refreshToken(String token) throws Exception {
+        if (!jwtUtil.validateToken(token)) {
+            throw new Exception("Token inválido o expirado");
+        }
+        
+        Integer usuarioId = jwtUtil.getUserIdFromToken(token);
+        if (usuarioId == null) {
+            throw new Exception("Token no contiene usuario_id válido");
+        }
+        
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new Exception("Usuario no encontrado"));
+        
+        String newToken = jwtUtil.generateToken(
+            usuario.getEmail(),
+            usuario.getUsuario_id(),
+            usuario.getNombre(),
+            usuario.getRol()
+        );
+        
+        return new AuthResponse(
+                newToken,
+                usuario.getUsuario_id(),
+                usuario.getEmail(),
+                usuario.getNombre(),
+                usuario.getTelefono(),
+                usuario.getDireccion(),
+                usuario.getRun(),
+                "Token refrescado exitosamente"
+        );
+    }
 }

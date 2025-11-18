@@ -1,9 +1,11 @@
 package com.tiendamascota.controller;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.Objects;
 
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -47,8 +49,10 @@ public class UsuarioController {
         @ApiResponse(responseCode = "200", description = "Usuario encontrado", content = @Content(mediaType = "application/json")),
         @ApiResponse(responseCode = "404", description = "Usuario no encontrado", content = @Content)
     })
-    public Optional<Usuario> getById(@PathVariable Integer id) {
-        return usuarioRepository.findById(id);
+    public ResponseEntity<Usuario> getById(@PathVariable int id) {
+        return usuarioRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping
@@ -56,8 +60,9 @@ public class UsuarioController {
     @ApiResponses({
         @ApiResponse(responseCode = "201", description = "Usuario creado", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "{\"usuario_id\": 1, \"email\": \"cliente@correo.com\"}")))
     })
-    public Usuario create(@RequestBody Usuario usuario) {
-        return usuarioRepository.save(usuario);
+    public ResponseEntity<Usuario> create(@RequestBody Usuario usuario) {
+        Usuario saved = Objects.requireNonNull(usuarioRepository.save(usuario));
+        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
     @PutMapping("/{id}")
@@ -66,9 +71,12 @@ public class UsuarioController {
         @ApiResponse(responseCode = "200", description = "Usuario actualizado", content = @Content(mediaType = "application/json")),
         @ApiResponse(responseCode = "404", description = "Usuario no encontrado", content = @Content)
     })
-    public Usuario update(@PathVariable Integer id, @RequestBody Usuario usuario) {
-        usuario.setUsuario_id(id);
-        return usuarioRepository.save(usuario);
+    public ResponseEntity<Usuario> update(@PathVariable int id, @RequestBody Usuario usuario) {
+        return usuarioRepository.findById(id).map(existing -> {
+            usuario.setUsuario_id(id);
+            Usuario saved = Objects.requireNonNull(usuarioRepository.save(usuario));
+            return ResponseEntity.ok(saved);
+        }).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")
@@ -76,7 +84,12 @@ public class UsuarioController {
     @ApiResponses({
         @ApiResponse(responseCode = "204", description = "Usuario eliminado", content = @Content)
     })
-    public void delete(@PathVariable Integer id) {
-        usuarioRepository.deleteById(id);
+    public ResponseEntity<Void> delete(@PathVariable int id) {
+        if (usuarioRepository.existsById(id)) {
+            usuarioRepository.deleteById(id);
+            return ResponseEntity.noContent().build();
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 }
