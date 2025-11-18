@@ -24,7 +24,7 @@ public class CorsConfig implements WebMvcConfigurer {
                 .toArray(String[]::new);
 
         registry.addMapping("/api/**")
-                .allowedOrigins(origins.length == 0 ? new String[] {"https://tienda-mi-mascota.vercel.app"} : origins)
+                .allowedOriginPatterns(origins.length == 0 ? new String[] {"https://tienda-mi-mascota.vercel.app"} : origins)
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true)
@@ -32,7 +32,7 @@ public class CorsConfig implements WebMvcConfigurer {
         
         // Also allow legacy /productos/* paths (frontend may call without /api prefix)
         registry.addMapping("/productos/**")
-            .allowedOrigins(origins.length == 0 ? new String[] {"https://tienda-mi-mascota.vercel.app"} : origins)
+            .allowedOriginPatterns(origins.length == 0 ? new String[] {"https://tienda-mi-mascota.vercel.app"} : origins)
             .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
             .allowedHeaders("*")
             .allowCredentials(true)
@@ -40,7 +40,7 @@ public class CorsConfig implements WebMvcConfigurer {
         
         // Allow auth endpoints for web and mobile
         registry.addMapping("/auth/**")
-            .allowedOrigins(origins.length == 0 ? new String[] {"https://tienda-mi-mascota.vercel.app"} : origins)
+            .allowedOriginPatterns(origins.length == 0 ? new String[] {"https://tienda-mi-mascota.vercel.app"} : origins)
             .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
             .allowedHeaders("*")
             .allowCredentials(true)
