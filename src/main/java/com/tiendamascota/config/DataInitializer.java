@@ -20,7 +20,7 @@ public class DataInitializer {
     public CommandLineRunner initDatabase(ProductoRepository productoRepo, UsuarioRepository usuarioRepo, PasswordEncoder passwordEncoder) {
         return args -> {
             // Inicializar usuario admin si no existe
-            if (usuarioRepo.count() == 0) {
+            if (usuarioRepo.findByEmail("admin").isEmpty()) {
                 Usuario admin = new Usuario();
                 admin.setEmail("admin");
                 admin.setPassword(passwordEncoder.encode("admin"));
@@ -29,7 +29,7 @@ public class DataInitializer {
                 usuarioRepo.save(admin);
                 System.out.println("✅ Usuario admin/admin creado con rol ADMIN");
             } else {
-                System.out.println("⚠️ Ya existen usuarios en la base de datos. Usuario admin no creado.");
+                System.out.println("⚠️ Usuario admin ya existe en la base de datos.");
             }
             
             try {
