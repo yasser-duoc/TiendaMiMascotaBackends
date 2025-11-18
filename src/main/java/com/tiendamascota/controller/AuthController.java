@@ -85,4 +85,24 @@ public class AuthController {
         response.put("mensaje", "Sesión cerrada exitosamente");
         return ResponseEntity.ok(response);
     }
+    
+    @PostMapping("/refresh")
+    @Operation(summary = "Refrescar token", description = "Genera un nuevo token JWT usando un token válido")
+    public ResponseEntity<?> refreshToken(@RequestHeader("Authorization") String authHeader) {
+        try {
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                Map<String, String> error = new HashMap<>();
+                error.put("mensaje", "Token no proporcionado");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+            }
+            
+            String token = authHeader.substring(7);
+            AuthResponse response = authService.refreshToken(token);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("mensaje", "Token inválido o expirado");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+        }
+    }
 }
