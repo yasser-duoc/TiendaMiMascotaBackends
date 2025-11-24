@@ -3,7 +3,6 @@ package com.tiendamascota.controller;
 import java.util.List;
 import java.util.Objects;
 
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -24,7 +23,7 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
-@Profile("local")
+
 @RestController
 @RequestMapping("/api/usuarios")
 public class UsuarioController {
