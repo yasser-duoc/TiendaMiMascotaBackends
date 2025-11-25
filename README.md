@@ -69,6 +69,14 @@ El servidor estará disponible en: `http://localhost:8080/api`
 - `PUT /api/productos/{id}` - Actualizar producto (admin)
 - `DELETE /api/productos/{id}` - Eliminar producto (admin)
 
+### **👥 Usuarios**
+
+- `GET /api/usuarios` - Listar usuarios
+- `GET /api/usuarios/{id}` - Obtener usuario por ID
+- `POST /api/usuarios` - Crear usuario
+- `PUT /api/usuarios/{id}` - Actualizar usuario
+- `DELETE /api/usuarios/{id}` - Eliminar usuario
+
 ### **📦 Órdenes**
 
 - `POST /api/ordenes` - Crear nueva orden
