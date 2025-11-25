@@ -3,8 +3,10 @@ package com.tiendamascota.config;
 import java.util.Arrays;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -16,6 +18,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
 
 import com.tiendamascota.security.JwtAuthenticationFilter;
 
@@ -39,6 +42,7 @@ public class SecurityConfig {
         config.addAllowedOriginPattern("https://*.vercel.app");
         config.addAllowedOrigin("https://mimascota.vercel.app");
         config.addAllowedOrigin("http://localhost:5173");
+        config.addAllowedOrigin("http://localhost:5174"); // Dev: Vite default port for new projects
         config.addAllowedOrigin("http://localhost:3000");
         config.addAllowedOrigin("http://localhost:8080");
         
@@ -60,6 +64,24 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
+    }
+
+    @Bean
+    public FilterRegistrationBean<CorsFilter> corsFilterRegistration() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOriginPatterns(Arrays.asList("https://*.vercel.app", "https://mimascota.vercel.app", "http://localhost:5173", "http://localhost:5174", "http://localhost:3000", "http://localhost:8080"));
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        config.setAllowedHeaders(Arrays.asList("*"));
+        config.setExposedHeaders(Arrays.asList("Authorization"));
+        config.setAllowCredentials(true);
+        config.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+
+        FilterRegistrationBean<CorsFilter> bean = new FilterRegistrationBean<>(new CorsFilter(source));
+        bean.setOrder(Ordered.HIGHEST_PRECEDENCE);
+        return bean;
     }
     
     @Bean

@@ -31,9 +31,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
-// @Profile("local")
 @RestController
-@RequestMapping({"/api/productos"})
+@RequestMapping({"/productos"})
 // @CrossOrigin(origins = "*")
 @Tag(name = "Productos", description = "API de gestión de productos")
 public class ProductoController {

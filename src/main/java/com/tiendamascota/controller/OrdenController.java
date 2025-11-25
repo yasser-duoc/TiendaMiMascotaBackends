@@ -32,7 +32,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 
 @RestController
-@RequestMapping("/api/ordenes")
+@RequestMapping("/ordenes")
 // @CrossOrigin(origins = "*")
 @Tag(name = "Órdenes", description = "API de gestión de órdenes de compra")
 public class OrdenController {
