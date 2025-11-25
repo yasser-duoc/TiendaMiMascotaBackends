@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -17,6 +18,7 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 
 @ControllerAdvice
+@ConditionalOnProperty(name = "app.exception-handler.enabled", havingValue = "true", matchIfMissing = true)
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -58,7 +60,9 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleHttpMessageNotReadable(HttpMessageNotReadableException ex) {
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("mensaje", "JSON inválido o formato incorrecto");
-        body.put("errors", ex.getMostSpecificCause() != null ? ex.getMostSpecificCause().getMessage() : ex.getMessage());
+        Throwable specific = ex.getMostSpecificCause();
+        String message = specific != null ? specific.getMessage() : ex.getMessage();
+        body.put("errors", message);
         body.put("status", HttpStatus.BAD_REQUEST.value());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }

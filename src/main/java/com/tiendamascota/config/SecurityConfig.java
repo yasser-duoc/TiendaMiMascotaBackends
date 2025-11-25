@@ -90,27 +90,27 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authz -> authz
-                // Public endpoints
-                .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/productos/**").permitAll()
-                .requestMatchers(HttpMethod.OPTIONS, "/api/productos/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/usuarios/**").permitAll()
-                .requestMatchers(HttpMethod.OPTIONS, "/api/usuarios/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/ordenes/**").permitAll()
-                .requestMatchers(HttpMethod.OPTIONS, "/api/ordenes/**").permitAll()
+                // Public endpoints (context-path `/api` is configured globally, security matches paths inside the context)
+                .requestMatchers("/auth/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/productos/**").permitAll()
+                .requestMatchers(HttpMethod.OPTIONS, "/productos/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/usuarios/**").permitAll()
+                .requestMatchers(HttpMethod.OPTIONS, "/usuarios/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/ordenes/**").permitAll()
+                .requestMatchers(HttpMethod.OPTIONS, "/ordenes/**").permitAll()
 
                 // Require authentication for write operations
-                .requestMatchers(HttpMethod.POST, "/api/productos/**").authenticated()
-                .requestMatchers(HttpMethod.PUT, "/api/productos/**").authenticated()
-                .requestMatchers(HttpMethod.DELETE, "/api/productos/**").authenticated()
+                .requestMatchers(HttpMethod.POST, "/productos/**").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/productos/**").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/productos/**").authenticated()
 
-                .requestMatchers(HttpMethod.POST, "/api/usuarios/**").authenticated()
-                .requestMatchers(HttpMethod.PUT, "/api/usuarios/**").authenticated()
-                .requestMatchers(HttpMethod.DELETE, "/api/usuarios/**").authenticated()
+                .requestMatchers(HttpMethod.POST, "/usuarios/**").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/usuarios/**").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/usuarios/**").authenticated()
 
-                .requestMatchers(HttpMethod.POST, "/api/ordenes/**").authenticated()
-                .requestMatchers(HttpMethod.PUT, "/api/ordenes/**").authenticated()
-                .requestMatchers(HttpMethod.DELETE, "/api/ordenes/**").authenticated()
+                .requestMatchers(HttpMethod.POST, "/ordenes/**").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/ordenes/**").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/ordenes/**").authenticated()
 
                 // Swagger / OpenAPI
                 .requestMatchers("/swagger-ui.html").permitAll()

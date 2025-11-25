@@ -69,6 +69,14 @@ El servidor estará disponible en: `http://localhost:8080/api`
 - `PUT /api/productos/{id}` - Actualizar producto (admin)
 - `DELETE /api/productos/{id}` - Eliminar producto (admin)
 
+### **👥 Usuarios**
+
+- `GET /api/usuarios` - Listar usuarios
+- `GET /api/usuarios/{id}` - Obtener usuario por ID
+- `POST /api/usuarios` - Crear usuario
+- `PUT /api/usuarios/{id}` - Actualizar usuario
+- `DELETE /api/usuarios/{id}` - Eliminar usuario
+
 ### **📦 Órdenes**
 
 - `POST /api/ordenes` - Crear nueva orden
@@ -118,150 +126,212 @@ Hibernate creará las tablas automáticamente con `ddl-auto=update`.
 # 1. Login
 curl -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"test@test.com","password":"123456"}'
+  *** Begin Replacement ***
+  # 🐾 Tienda Mi Mascota Backend
 
-# 2. Usar token
-curl -X GET http://localhost:8080/api/auth/verificar \
-  -H "Authorization: Bearer eyJhbGc..."
-```
+  Backend con Spring Boot 3.5.7 para la aplicación de e‑commerce de productos para mascotas.
 
-## 🌐 **CORS Configurado**
+  ---
 
-- ✅ `https://mimascota.vercel.app` (Producción web)
-- ✅ `http://localhost:5173` (Vite desarrollo)
-- ✅ `http://localhost:3000` (React desarrollo)
-- ✅ Android (allowedOriginPatterns: *)
+  ## 🚀 Resumen rápido
 
-## 🚀 **Despliegue en Render**
+  - Base URL (context-path): `https://<tu-host>/api` (la aplicación usa `server.servlet.context-path=/api`).
+  - Swagger UI (producción): `https://tiendamimascotabackends.onrender.com/api/swagger-ui/index.html`
+  - OpenAPI JSON: `https://tiendamimascotabackends.onrender.com/api/v3/api-docs`
 
-Ver guía completa en **[DEPLOY_RENDER.md](./DEPLOY_RENDER.md)**
+  > Si tu dominio de producción es distinto, sustituye `tiendamimascotabackends.onrender.com` por tu host.
 
-### **Resumen rápido:**
+  ---
 
-1. **Crear MySQL Database en Render**
-2. **Crear Web Service:**
-   - Build: `./mvnw clean package -DskipTests`
-   - Start: `java -Dserver.port=$PORT -Dspring.profiles.active=prod -jar target/*.jar`
-3. **Variables de entorno:**
-   ```
-   DATABASE_URL=jdbc:mysql://...
-   DB_USERNAME=admin_tienda
-   DB_PASSWORD=********
-   JWT_SECRET=tu-secreto-seguro
-   ```
-4. **Auto-Deploy:** Push a `main` o `desarrollo`
+  ## 🧰 Stack tecnológico
 
-**URL producción:** `https://[tu-service].onrender.com/api`
+  - Java 21
+  - Spring Boot 3.5.7
+  - Spring Security + JWT (JJWT)
+  - Spring Data JPA (Hibernate)
+  - H2 (desarrollo) / MySQL (producción)
+  - Maven
+  - OpenAPI / Swagger (springdoc)
 
-## 📁 **Estructura del Proyecto**
+  ---
 
-```
-src/
-├── main/
-│   ├── java/com/tiendamascota/
-│   │   ├── TiendaMascotaApplication.java
-│   │   ├── config/
-│   │   │   ├── CorsConfig.java
-│   │   │   ├── SecurityConfig.java
-│   │   │   └── DataInitializer.java
-│   │   ├── controller/
-│   │   │   ├── AuthController.java
-│   │   │   ├── ProductoController.java
-│   │   │   └── OrdenController.java
-│   │   ├── dto/
-│   │   │   ├── AuthResponse.java
-│   │   │   ├── LoginRequest.java
-│   │   │   ├── RegistroRequest.java
-│   │   │   ├── CrearOrdenRequest.java
-│   │   │   └── ...
-│   │   ├── model/
-│   │   │   ├── Usuario.java
-│   │   │   ├── Producto.java
-│   │   │   ├── Orden.java
-│   │   │   └── OrdenItem.java
-│   │   ├── repository/
-│   │   │   ├── UsuarioRepository.java
-│   │   │   ├── ProductoRepository.java
-│   │   │   └── OrdenRepository.java
-│   │   ├── security/
-│   │   │   ├── JwtUtil.java
-│   │   │   └── JwtAuthenticationFilter.java
-│   │   ├── service/
-│   │   │   ├── AuthService.java
-│   │   │   └── OrdenService.java
-│   │   ├── util/
-│   │   │   └── RutValidator.java
-│   │   └── validation/
-│   │       ├── ValidRut.java
-│   │       └── RutValidatorConstraint.java
-│   └── resources/
-│       ├── application.properties
-│       └── application-prod.properties
-└── test/
-```
+  ## 🔁 Ejecutar localmente
 
-## 🧪 **Testing**
+  1) Clonar y compilar:
 
-```bash
-# Ejecutar tests
-mvn test
+  ```cmd
+  git clone https://github.com/yasser-duoc/TiendaMiMascotaBackends.git
+  cd TiendaMiMascotaBackends
+  mvn clean package -DskipTests
+  ```
 
-# Con coverage
-mvn clean test jacoco:report
-```
+  2) Ejecutar en modo desarrollo (H2, perfil `local`):
 
-## 🔧 **Variables de Entorno**
+  ```cmd
+  set SPRING_PROFILES_ACTIVE=local
+  mvn -Dspring-boot.run.profiles=local -DskipTests spring-boot:run
+  ```
 
-| Variable | Descripción | Ejemplo |
-|----------|-------------|---------|
-| `DATABASE_URL` | URL completa de MySQL | `jdbc:mysql://host:3306/db?useSSL=true` |
-| `DB_USERNAME` | Usuario de base de datos | `admin_tienda` |
-| `DB_PASSWORD` | Contraseña de BD | `********` |
-| `JWT_SECRET` | Secret para firmar JWT | `mi-secreto-super-seguro-2025` |
-| `PORT` | Puerto del servidor (Render) | `8080` |
-| `SPRING_PROFILES_ACTIVE` | Perfil activo | `prod` |
+  3) Ejecutar el JAR (producción-similar):
 
-## 📊 **Características**
+  ```cmd
+  mvn clean package -DskipTests
+  set SPRING_PROFILES_ACTIVE=local
+  java -jar target\tienda-mascota-backend-1.0.0.jar
+  ```
 
-- ✅ Autenticación JWT con refresh
-- ✅ Gestión de usuarios con BCrypt
-- ✅ CRUD completo de productos
-- ✅ Sistema de órdenes con validación de stock
-- ✅ Paginación en listados
-- ✅ Validación de RUT chileno
-- ✅ CORS multi-plataforma (Web + Mobile)
-- ✅ Manejo de errores robusto
-- ✅ Swagger/OpenAPI documentation
-- ✅ Health checks para Render
-- ✅ Connection pooling (HikariCP)
-- ✅ SQL injection protection
-- ✅ Password encryption (BCrypt)
+  4) Probar endpoints:
 
-## 🤝 **Integración Frontend**
+  ```cmd
+  curl -i http://localhost:8080/api/productos
+  curl -i http://localhost:8080/api/v3/api-docs
+  ```
 
-### **React (Vercel):**
-```javascript
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
-```
+  ---
 
-### **Android (Kotlin):**
-```kotlin
-const val BASE_URL = "https://tu-backend.onrender.com/api/"
-```
+  ## 📦 Despliegue en Render (resumen práctico)
 
-Nota: El backend ya no utiliza integraciones externas para generación de imágenes (ej., Unsplash). Cada producto contiene `imageUrl` que obtiene imágenes estáticas o de terceros; la generación automática fue removida del backend.
+  1. En el panel de Render crea un **Web Service** y conecta el repo.
+  2. Build command:
 
-## 📝 **Licencia**
+  ```text
+  mvn clean package -DskipTests
+  ```
 
-Este proyecto es privado y propiedad de Tienda Mi Mascota.
+  3. Start command (ejemplo):
 
-## 👥 **Equipo**
+  ```text
+  java -Dserver.port=$PORT -Dspring.profiles.active=prod -jar target/*.jar
+  ```
 
-- Backend: Spring Boot + MySQL
-- Frontend Web: React + Vercel
-- Frontend Mobile: Android Nativo
-- Infraestructura: Render.com
+  4. Variables de entorno recomendadas (en Render → Environment):
 
----
+  - `DATABASE_URL` = `jdbc:mysql://host:3306/tu_db?useSSL=true&serverTimezone=UTC&allowPublicKeyRetrieval=true`
+  - `DB_USERNAME` = `<usuario_mysql>`
+  - `DB_PASSWORD` = `<pass_mysql>`
+  - `JWT_SECRET` = `<secreto_jwt_seguro>`
+  - `APP_CORS_ALLOWED_ORIGINS` = `https://tienda-mi-mascota.vercel.app` (o una lista separada por comas)
+  - `APP_ADMIN_INIT_SECRET` = `<secreto_para_init_admin>` (opcional, ver sección Admin)
+  - `APP_DATA_INIT_ENABLED` = `true|false` (si quieres inicializar data automáticamente)
 
-**¿Preguntas?** Revisa la documentación en [DEPLOY_RENDER.md](./DEPLOY_RENDER.md)
+  5. Push a la rama que Render vigila para disparar el build.
+
+  ---
+
+  ## 🔒 Swagger en producción (seguro)
+
+  La UI de Swagger está disponible en:
+
+  ```
+  https://tiendamimascotabackends.onrender.com/api/swagger-ui/index.html
+  ```
+
+  OpenAPI JSON:
+
+  ```
+  https://tiendamimascotabackends.onrender.com/api/v3/api-docs
+  ```
+
+  Recomendaciones de seguridad:
+
+  - No exponer Swagger públicamente en producción si contiene datos sensibles o facilita el descubrimiento de endpoints de administración.
+  - Opciones seguras para controlar acceso a Swagger:
+    - Permitir solo a usuarios con rol `ADMIN` (configurar en `SecurityConfig`).
+    - Habilitar Swagger solo mediante variable de entorno temporal `SWAGGER_ENABLED=true`.
+    - Filtrar por IP en la capa de infraestructura (firewall o reglas de Render).
+
+  Si quieres, puedo añadir en el código un matcher que permita Swagger solo a `ROLE_ADMIN` y mostrar el snippet.
+
+  ---
+
+  ## 🔧 Endpoints principales
+
+  (Se usan rutas relativas al context-path `/api`)
+
+  - `POST /api/auth/login` — Iniciar sesión
+  - `POST /api/auth/registro` — Registrar usuario
+  - `GET /api/productos` — Listar productos
+  - `GET /api/productos/{id}` — Obtener producto
+  - `POST /api/ordenes` — Crear orden
+  - `POST /api/productos/verificar-stock` — Verificar stock
+
+  Consulta la UI de Swagger para ver todos los endpoints y modelos.
+
+  ---
+
+  ## 🛠️ Inicializar admin (temporal)
+
+  Si necesitas crear el usuario `admin` en producción sin ejecutar scripts en la BD, el proyecto incluye un endpoint temporal protegido por secreto:
+
+  - `POST /api/auth/init-admin`
+    - Header: `X-Admin-Secret: <valor_de_APP_ADMIN_INIT_SECRET>`
+    - Requiere que la variable de entorno `APP_ADMIN_INIT_SECRET` esté configurada en Render.
+
+  Alternativa: activar `APP_DATA_INIT_ENABLED=true` (si `DataInitializer` crea el admin automáticamente). Usar con precaución.
+
+  ---
+
+  ## 🌐 CORS
+
+  - Variable en producción: `APP_CORS_ALLOWED_ORIGINS` (lista separada por comas). Ejemplo:
+
+  ```
+  APP_CORS_ALLOWED_ORIGINS=https://tienda-mi-mascota.vercel.app,http://localhost:3000
+  ```
+
+  - La configuración actual admite patrones (`allowedOriginPatterns`) para permitir subdominios `*.vercel.app`.
+
+  ---
+
+  ## 🐳 Docker (opcional)
+
+  - Construir imagen:
+
+  ```bash
+  docker build -t tienda-mascota-backend:local .
+  ```
+
+  - Ejecutar contenedor (ejemplo):
+
+  ```bash
+  docker run --rm -p 8080:8080 -e SPRING_PROFILES_ACTIVE=local -e APP_CORS_ALLOWED_ORIGINS=http://localhost:3000 tienda-mascota-backend:local
+  ```
+
+  ---
+
+  ## ✅ Verificaciones útiles
+
+  - ¿Swagger carga en producción?  -> `https://tiendamimascotabackends.onrender.com/api/swagger-ui/index.html`
+  - ¿OpenAPI JSON accesible? -> `https://tiendamimascotabackends.onrender.com/api/v3/api-docs`
+  - ¿Frontend recibe errores CORS? -> Revisa `APP_CORS_ALLOWED_ORIGINS` en Render y que `allowCredentials=true` combine con `allowedOriginPatterns` (no usar `*` cuando `allowCredentials=true`).
+
+  ---
+
+  ## 📂 Estructura del proyecto (resumen)
+
+  ```
+  src/main/java/com/tiendamascota
+    ├─ config/ (Cors, Security, DataInitializer)
+    ├─ controller/ (Auth, Producto, Orden, Usuario)
+    ├─ dto/
+    ├─ model/
+    ├─ repository/
+    └─ service/
+  ```
+
+  ---
+
+  ## 📞 Soporte / próximos pasos
+
+  Si quieres que:
+  - limite el acceso a Swagger por `ROLE_ADMIN` → escribo el patch en `SecurityConfig`.
+  - añada un ejemplo `settings.xml` para `mvn deploy` → lo genero.
+  - prepare un script de deploy para Render con instrucciones paso a paso → lo escribo.
+
+  Indica cuál de las tareas prefieres y la implemento.
+
+  ---
+
+  **Tienda Mi Mascota — Backend**
+
+  *** End Replacement ***
