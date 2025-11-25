@@ -2,6 +2,7 @@ package com.tiendamascota.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonAlias;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -28,6 +29,7 @@ public class Producto {
     
     @Column(nullable = false)
     @JsonProperty("producto_nombre")
+    @JsonAlias({"name", "nombre", "producto_nombre"})
     private String nombre;
     
     @Column(columnDefinition = "TEXT")
