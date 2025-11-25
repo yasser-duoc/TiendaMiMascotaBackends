@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.tiendamascota.config.ImageMappingsProperties;
+import com.tiendamascota.dto.ProductoRequest;
 import com.tiendamascota.dto.VerificarStockRequest;
 import com.tiendamascota.dto.VerificarStockResponse;
 import com.tiendamascota.model.Producto;
@@ -30,6 +31,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping({"/productos"})
@@ -206,7 +208,7 @@ public class ProductoController {
         @ApiResponse(responseCode = "200", description = "Producto actualizado", content = @Content(mediaType = "application/json")),
         @ApiResponse(responseCode = "404", description = "Producto no encontrado", content = @Content)
     })
-    public ResponseEntity<Producto> actualizar(@PathVariable Integer id, @RequestBody Producto productoActualizado) {
+    public ResponseEntity<Producto> actualizar(@PathVariable Integer id, @Valid @RequestBody ProductoRequest productoActualizado) {
         return productoRepository.findById(java.util.Objects.requireNonNull(id))
                 .map(producto -> {
                     producto.setNombre(productoActualizado.getNombre());
@@ -214,9 +216,10 @@ public class ProductoController {
                     producto.setPrice(productoActualizado.getPrice());
                     producto.setStock(productoActualizado.getStock());
                     producto.setCategory(productoActualizado.getCategory());
-                    producto.setImageUrl(productoActualizado.getImageUrl());
-                    producto.setDestacado(productoActualizado.getDestacado());
-                    producto.setValoracion(productoActualizado.getValoracion());
+                    if (productoActualizado.getImageUrl() != null) producto.setImageUrl(productoActualizado.getImageUrl());
+                    if (productoActualizado.getDestacado() != null) producto.setDestacado(productoActualizado.getDestacado());
+                    if (productoActualizado.getValoracion() != null) producto.setValoracion(productoActualizado.getValoracion());
+                    if (productoActualizado.getPrecioAnterior() != null) producto.setPrecioAnterior(productoActualizado.getPrecioAnterior());
                     return ResponseEntity.ok(productoRepository.save(java.util.Objects.requireNonNull(producto)));
                 })
                 .orElse(ResponseEntity.notFound().build());
