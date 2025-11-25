@@ -21,7 +21,12 @@ public class HuachitosService {
                     .bodyToMono(String.class)
                     .block();
         } catch (WebClientResponseException e) {
-            throw new RuntimeException("Huachitos error: " + e.getRawStatusCode() + " - " + e.getResponseBodyAsString(), e);
+            // Loguear body para debugging (puede contener HTML challenge)
+            String body = e.getResponseBodyAsString();
+            if (e.getRawStatusCode() == 403 && body != null && body.contains("Just a moment")) {
+                throw new RuntimeException("Huachitos bloqueó la petición con Cloudflare JS challenge (403). Contacta a huachitos.cl para acceso API o whitelist. HTML: " + (body.length() > 1000 ? body.substring(0,1000) + "..." : body), e);
+            }
+            throw new RuntimeException("Huachitos error: " + e.getRawStatusCode() + " - " + body, e);
         } catch (Exception e) {
             throw new RuntimeException("Error conectando a Huachitos", e);
         }
