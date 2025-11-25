@@ -12,6 +12,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.beans.factory.annotation.Value;
+
+import com.tiendamascota.model.Usuario;
+import com.tiendamascota.repository.UsuarioRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.tiendamascota.dto.AuthResponse;
 import com.tiendamascota.dto.LoginRequest;
@@ -29,6 +34,15 @@ public class AuthController {
     
     @Autowired
     private AuthService authService;
+
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Value("${app.admin.init-secret:}")
+    private String adminInitSecret;
     
     @PostMapping("/login")
     @Operation(summary = "Iniciar sesión", description = "Autentica un usuario con email y contraseña")
@@ -103,5 +117,29 @@ public class AuthController {
             error.put("mensaje", "Token inválido o expirado");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
         }
+    }
+
+    @PostMapping("/init-admin")
+    @Operation(summary = "Inicializar admin (temporal)", description = "Crea el usuario admin si no existe. Protegido por secreto de entorno.")
+    public ResponseEntity<?> initAdmin(@RequestHeader(value = "X-Admin-Secret", required = false) String secret) {
+        if (adminInitSecret == null || adminInitSecret.isBlank()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("mensaje", "Inicialización de admin no habilitada"));
+        }
+        if (secret == null || !adminInitSecret.equals(secret)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("mensaje", "Secreto inválido"));
+        }
+
+        if (usuarioRepository.findByEmail("admin").isPresent()) {
+            return ResponseEntity.ok(Map.of("mensaje", "Usuario admin ya existe"));
+        }
+
+        Usuario admin = new Usuario();
+        admin.setEmail("admin");
+        admin.setPassword(passwordEncoder.encode("admin"));
+        admin.setNombre("Administrador");
+        admin.setRol("ADMIN");
+        usuarioRepository.save(admin);
+
+        return ResponseEntity.ok(Map.of("mensaje", "Usuario admin creado"));
     }
 }
