@@ -58,7 +58,9 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleHttpMessageNotReadable(HttpMessageNotReadableException ex) {
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("mensaje", "JSON inválido o formato incorrecto");
-        body.put("errors", ex.getMostSpecificCause() != null ? ex.getMostSpecificCause().getMessage() : ex.getMessage());
+        Throwable specific = ex.getMostSpecificCause();
+        String message = specific != null ? specific.getMessage() : ex.getMessage();
+        body.put("errors", message);
         body.put("status", HttpStatus.BAD_REQUEST.value());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
