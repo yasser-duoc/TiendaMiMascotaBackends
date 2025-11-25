@@ -21,33 +21,21 @@ public class CorsConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(@NonNull CorsRegistry registry) {
-        String allowed = Objects.requireNonNullElse(allowedOrigins, "");
-        String[] origins = Arrays.stream(allowed.split(","))
+        String allowedRaw = Objects.requireNonNullElse(allowedOrigins, "");
+        String[] origins = Arrays.stream(allowedRaw.split(","))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty() && !s.equals("*")) // Explicitly filter out "*" to prevent errors
                 .toArray(String[]::new);
 
         logger.info("CORS Configuration - Allowed Origins: {}", Arrays.toString(origins));
 
-        registry.addMapping("/api/**")
-                .allowedOriginPatterns(origins.length == 0 ? new String[] {"https://tienda-mi-mascota.vercel.app"} : origins)
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                .allowedHeaders("*")
-                .allowCredentials(true)
-                .maxAge(3600);
-        
-        // Also allow legacy /productos/* paths (frontend may call without /api prefix)
-        registry.addMapping("/productos/**")
-            .allowedOriginPatterns(origins.length == 0 ? new String[] {"https://tienda-mi-mascota.vercel.app"} : origins)
-            .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-            .allowedHeaders("*")
-            .allowCredentials(true)
-            .maxAge(3600);
-        
-        // Allow auth endpoints for web and mobile
-        registry.addMapping("/auth/**")
-            .allowedOriginPatterns(origins.length == 0 ? new String[] {"https://tienda-mi-mascota.vercel.app"} : origins)
-            .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+        // Map CORS for all endpoints inside the servlet context. The application sets
+        // `server.servlet.context-path=/api` so mappings are evaluated relative to that.
+        String[] allowed = origins.length == 0 ? new String[] {"https://tienda-mi-mascota.vercel.app"} : origins;
+
+        registry.addMapping("/**")
+            .allowedOriginPatterns(allowed)
+            .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
             .allowedHeaders("*")
             .allowCredentials(true)
             .maxAge(3600);
