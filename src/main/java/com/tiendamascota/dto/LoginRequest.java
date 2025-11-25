@@ -1,7 +1,11 @@
 package com.tiendamascota.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+
 public class LoginRequest {
+    @JsonAlias({"username", "user", "email"})
     private String email;
+    @JsonAlias({"password", "pass"})
     private String password;
     
     public LoginRequest() {
