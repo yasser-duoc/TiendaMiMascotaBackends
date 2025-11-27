@@ -74,8 +74,19 @@ public class UsuarioController {
     })
     public ResponseEntity<Usuario> update(@PathVariable int id, @RequestBody Usuario usuario) {
         return usuarioRepository.findById(id).map(existing -> {
-            usuario.setUsuario_id(id);
-            Usuario saved = Objects.requireNonNull(usuarioRepository.save(usuario));
+            // Mapear sólo los campos proporcionados para evitar sobrescribir valores no enviados (ej. password)
+            if (usuario.getEmail() != null) existing.setEmail(usuario.getEmail());
+            if (usuario.getNombre() != null) existing.setNombre(usuario.getNombre());
+            if (usuario.getTelefono() != null) existing.setTelefono(usuario.getTelefono());
+            if (usuario.getDireccion() != null) existing.setDireccion(usuario.getDireccion());
+            if (usuario.getRun() != null) existing.setRun(usuario.getRun());
+            if (usuario.getRol() != null) existing.setRol(usuario.getRol());
+            // Sólo actualizar la contraseña si el cliente la envía explícitamente y no está vacía
+            if (usuario.getPassword() != null && !usuario.getPassword().isBlank()) {
+                existing.setPassword(usuario.getPassword());
+            }
+
+            Usuario saved = Objects.requireNonNull(usuarioRepository.save(existing));
             return ResponseEntity.ok(saved);
         }).orElseGet(() -> ResponseEntity.notFound().build());
     }
