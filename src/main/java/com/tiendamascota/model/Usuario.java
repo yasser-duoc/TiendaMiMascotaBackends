@@ -36,6 +36,9 @@ public class Usuario {
     private String direccion;
     private String run;
     
+    @Column(columnDefinition = "LONGTEXT")
+    private String fotoUrl;
+    
     @Column(nullable = false)
     private String rol = "cliente";
     
@@ -97,6 +100,14 @@ public class Usuario {
 
     public void setRun(String run) {
         this.run = run;
+    }
+    
+    public String getFotoUrl() {
+        return fotoUrl;
+    }
+
+    public void setFotoUrl(String fotoUrl) {
+        this.fotoUrl = fotoUrl;
     }
     
     public String getRol() {

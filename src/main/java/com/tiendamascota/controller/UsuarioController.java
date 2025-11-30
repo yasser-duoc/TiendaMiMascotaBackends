@@ -81,6 +81,7 @@ public class UsuarioController {
             if (usuario.getDireccion() != null) existing.setDireccion(usuario.getDireccion());
             if (usuario.getRun() != null) existing.setRun(usuario.getRun());
             if (usuario.getRol() != null) existing.setRol(usuario.getRol());
+            if (usuario.getFotoUrl() != null) existing.setFotoUrl(usuario.getFotoUrl());
             // Sólo actualizar la contraseña si el cliente la envía explícitamente y no está vacía
             if (usuario.getPassword() != null && !usuario.getPassword().isBlank()) {
                 existing.setPassword(usuario.getPassword());
