@@ -80,285 +80,132 @@ El servidor estará disponible en: `http://localhost:8080/api`
 ### **📦 Órdenes**
 
 - `POST /api/ordenes` - Crear nueva orden
-- `POST /api/ordenes/verificar-stock` - Verificar stock antes de ordenar
-- `GET /api/ordenes/usuario/{usuarioId}` - Historial de órdenes del usuario
+ # 🐾 Tienda Mi Mascota — Backend
 
-## 📖 **Documentación API (Swagger)**
+Backend en Java con Spring Boot para una tienda de productos para mascotas.
 
-Accede a Swagger UI en: `http://localhost:8080/api/swagger-ui.html`
+## Resumen rápido
 
-OpenAPI JSON: `http://localhost:8080/api/v3/api-docs`
+- Base URL (context-path): `/api` (configurado como `server.servlet.context-path=/api`).
+- Swagger UI (ej. en producción): `https://<tu-host>/api/swagger-ui/index.html`
+- OpenAPI JSON: `https://<tu-host>/api/v3/api-docs`
 
-## 🗄️ **Base de Datos**
+> Nota: la integración externa con "Huachitos" fue eliminada del código fuente — no hay beans ni configuraciones activas para esa integración.
 
-### **H2 Console (Desarrollo)**
+## Stack tecnológico
 
-Accede en: `http://localhost:8080/api/h2-console`
+- Java 21
+- Spring Boot 3.5.x
+- Spring Security + JWT
+- Spring Data JPA (Hibernate)
+- H2 (desarrollo) / MySQL (producción)
+- Maven
 
+## Instalación y ejecución
+
+1) Clonar y compilar:
+
+```cmd
+git clone https://github.com/yasser-duoc/TiendaMiMascotaBackends.git
+cd TiendaMiMascotaBackends
+mvn clean package -DskipTests
 ```
-JDBC URL: jdbc:h2:mem:testdb
-User: sa
-Password: (vacío)
+
+2) Ejecutar en desarrollo (perfil `local`, H2):
+
+```cmd
+set SPRING_PROFILES_ACTIVE=local
+mvn -Dspring-boot.run.profiles=local spring-boot:run
 ```
 
-### **MySQL (Producción)**
+3) Ejecutar JAR (producción-similar):
 
-```sql
-CREATE DATABASE tienda_mimascota 
-CHARACTER SET utf8mb4 
-COLLATE utf8mb4_unicode_ci;
+```cmd
+java -Dserver.port=%PORT% -Dspring.profiles.active=prod -jar target\tienda-mascota-backend-1.0.0.jar
 ```
 
-Hibernate creará las tablas automáticamente con `ddl-auto=update`.
+## Configuración recomendada para producción
 
-## 🔑 **Autenticación JWT**
+- `DATABASE_URL`, `DB_USERNAME`, `DB_PASSWORD` (MySQL)
+- `JWT_SECRET` (secreto para tokens)
+- `APP_CORS_ALLOWED_ORIGINS` (lista de orígenes permitidos)
 
-### **Claims incluidos:**
-- `usuario_id` (Integer)
-- `email` (String)
-- `nombre` (String)
-- `rol` (String)
+## Endpoints principales (rutas relativas a `/api`)
 
-### **Expiración:** 7 días (604800000 ms)
+### Autenticación
 
-### **Uso:**
+- `POST /api/auth/registro` — Registrar usuario
+- `POST /api/auth/login` — Login (devuelve JWT)
+
+### Productos
+
+- `GET /api/productos` — Listar (paginado)
+- `GET /api/productos/{id}` — Obtener por ID
+- `POST /api/productos/verificar-stock` — Verificar stock
+- `POST /api/productos` — Crear (admin)
+- `PUT /api/productos/{id}` — Actualizar (admin)
+
+### Usuarios
+
+- `GET /api/usuarios` — Listar usuarios
+- `GET /api/usuarios/{id}` — Obtener usuario
+- `PUT /api/usuarios/{id}` — Actualizar usuario (preserva password si no se envía)
+
+### Órdenes
+
+- `POST /api/ordenes` — Crear orden
+- `POST /api/ordenes/verificar-stock` — Verificar stock antes de crear orden
+
+## Admin — Órdenes (paginación y filtros)
+
+- `GET /api/ordenes?page=0&size=20` — Listar órdenes (admin)
+  - Parámetros opcionales:
+    - `usuarioId` (Long) — filtra por ID de usuario
+    - `email` (String) — filtra por email de usuario
+    - `estado` (String) — filtra por estado (ej. `pendiente`, `enviado`, `entregado`)
+    - `page` y `size` — paginación
+- `GET /api/ordenes/{id}` — Obtener orden con items
+- `PUT /api/ordenes/{id}` — Actualizar estado y datos de envío (admin)
+
+Ejemplo (obtener órdenes filtradas por email):
+
+```cmd
+curl -i "http://localhost:8080/api/ordenes?page=0&size=20&email=cliente@correo.com" \
+  -H "Authorization: Bearer <TOKEN_ADMIN>"
+```
+
+## Swagger / OpenAPI
+
+- Swagger UI: `/api/swagger-ui/index.html`
+- OpenAPI JSON: `/api/v3/api-docs`
+
+Recomendación: en producción restringir el acceso a Swagger (por rol o IP).
+
+## Docker (opcional)
+
 ```bash
-# 1. Login
-curl -X POST http://localhost:8080/api/auth/login \
-  -H "Content-Type: application/json" \
-  *** Begin Replacement ***
-  # 🐾 Tienda Mi Mascota Backend
+docker build -t tienda-mascota-backend:local .
+docker run --rm -p 8080:8080 -e SPRING_PROFILES_ACTIVE=local tienda-mascota-backend:local
+```
 
-  Backend con Spring Boot 3.5.7 para la aplicación de e‑commerce de productos para mascotas.
+## Verificaciones rápidas
 
-  ---
+- Cargar Swagger: `http://localhost:8080/api/swagger-ui/index.html`
+- OpenAPI JSON: `http://localhost:8080/api/v3/api-docs`
 
-  ## 🚀 Resumen rápido
+## Soporte / próximos pasos
 
-  - Base URL (context-path): `https://<tu-host>/api` (la aplicación usa `server.servlet.context-path=/api`).
-  - Swagger UI (producción): `https://tiendamimascotabackends.onrender.com/api/swagger-ui/index.html`
-  - OpenAPI JSON: `https://tiendamimascotabackends.onrender.com/api/v3/api-docs`
+- Puedo añadir protección a Swagger para `ROLE_ADMIN`.
+- Puedo generar un `settings.xml` o script de deploy para Render.
 
-  > Si tu dominio de producción es distinto, sustituye `tiendamimascotabackends.onrender.com` por tu host.
+## 👤 Autores
 
-  ---
+**ddoblejotadev**
+- GitHub: [@ddoblejotadev](https://github.com/ddoblejotadev)
 
-  ## 🧰 Stack tecnológico
+**yasser-duoc**
+- GitHub: [@yasser-duoc](https://github.com/yasser-duoc)
 
-  - Java 21
-  - Spring Boot 3.5.7
-  - Spring Security + JWT (JJWT)
-  - Spring Data JPA (Hibernate)
-  - H2 (desarrollo) / MySQL (producción)
-  - Maven
-  - OpenAPI / Swagger (springdoc)
+---
 
-  ---
-
-  ## 🔁 Ejecutar localmente
-
-  1) Clonar y compilar:
-
-  ```cmd
-  git clone https://github.com/yasser-duoc/TiendaMiMascotaBackends.git
-  cd TiendaMiMascotaBackends
-  mvn clean package -DskipTests
-  ```
-
-  2) Ejecutar en modo desarrollo (H2, perfil `local`):
-
-  ```cmd
-  set SPRING_PROFILES_ACTIVE=local
-  mvn -Dspring-boot.run.profiles=local -DskipTests spring-boot:run
-  ```
-
-  3) Ejecutar el JAR (producción-similar):
-
-  ```cmd
-  mvn clean package -DskipTests
-  set SPRING_PROFILES_ACTIVE=local
-  java -jar target\tienda-mascota-backend-1.0.0.jar
-  ```
-
-  4) Probar endpoints:
-
-  ```cmd
-  curl -i http://localhost:8080/api/productos
-  curl -i http://localhost:8080/api/v3/api-docs
-  ```
-
-  ---
-
-  ## 📦 Despliegue en Render (resumen práctico)
-
-  1. En el panel de Render crea un **Web Service** y conecta el repo.
-  2. Build command:
-
-  ```text
-  mvn clean package -DskipTests
-  ```
-
-  3. Start command (ejemplo):
-
-  ```text
-  java -Dserver.port=$PORT -Dspring.profiles.active=prod -jar target/*.jar
-  ```
-
-  4. Variables de entorno recomendadas (en Render → Environment):
-
-  - `DATABASE_URL` = `jdbc:mysql://host:3306/tu_db?useSSL=true&serverTimezone=UTC&allowPublicKeyRetrieval=true`
-  - `DB_USERNAME` = `<usuario_mysql>`
-  - `DB_PASSWORD` = `<pass_mysql>`
-  - `JWT_SECRET` = `<secreto_jwt_seguro>`
-  - `APP_CORS_ALLOWED_ORIGINS` = `https://tienda-mi-mascota.vercel.app` (o una lista separada por comas)
-  - `APP_ADMIN_INIT_SECRET` = `<secreto_para_init_admin>` (opcional, ver sección Admin)
-  - `APP_DATA_INIT_ENABLED` = `true|false` (si quieres inicializar data automáticamente)
-
-  5. Push a la rama que Render vigila para disparar el build.
-
-  ---
-
-  ## 🔒 Swagger en producción (seguro)
-
-  La UI de Swagger está disponible en:
-
-  ```
-  https://tiendamimascotabackends.onrender.com/api/swagger-ui/index.html
-  ```
-
-  OpenAPI JSON:
-
-  ```
-  https://tiendamimascotabackends.onrender.com/api/v3/api-docs
-  ```
-
-  Recomendaciones de seguridad:
-
-  - No exponer Swagger públicamente en producción si contiene datos sensibles o facilita el descubrimiento de endpoints de administración.
-  - Opciones seguras para controlar acceso a Swagger:
-    - Permitir solo a usuarios con rol `ADMIN` (configurar en `SecurityConfig`).
-    - Habilitar Swagger solo mediante variable de entorno temporal `SWAGGER_ENABLED=true`.
-    - Filtrar por IP en la capa de infraestructura (firewall o reglas de Render).
-
-  Si quieres, puedo añadir en el código un matcher que permita Swagger solo a `ROLE_ADMIN` y mostrar el snippet.
-
-  ---
-
-  ## 🔧 Endpoints principales
-
-  (Se usan rutas relativas al context-path `/api`)
-
-  - `POST /api/auth/login` — Iniciar sesión
-  - `POST /api/auth/registro` — Registrar usuario
-  - `GET /api/productos` — Listar productos
-  - `GET /api/productos/{id}` — Obtener producto
-  - `POST /api/ordenes` — Crear orden
-  - `POST /api/productos/verificar-stock` — Verificar stock
-
-  ### **Admin - Órdenes**
-
-  - `GET /api/ordenes?page=0&size=20` — Listar órdenes (admin). Parámetros opcionales:
-    - `usuarioId` (Long): filtra órdenes por ID de usuario.
-    - `email` (String): filtra órdenes por email del usuario.
-    - `estado` (String): filtra por estado (ej. "pendiente", "enviado", "entregado").
-    - `page` y `size`: paginación.
-
-  - `GET /api/ordenes/{id}` — Obtener orden detallada (incluye items y datos de envío).
-  - `PUT /api/ordenes/{id}` — Actualizar estado y datos de envío de la orden (admin).
-
-  Ejemplo: obtener la primera página de órdenes del usuario con email `cliente@correo.com`:
-
-  ```cmd
-  curl -i "http://localhost:8080/api/ordenes?page=0&size=20&email=cliente@correo.com" \
-    -H "Authorization: Bearer <TOKEN_ADMIN>"
-  ```
-
-  Para cambiar el estado desde Swagger UI o la app frontend, usar `PUT /api/ordenes/{id}` con un body JSON que contenga al menos el campo `estado`:
-
-  ```json
-  {
-    "estado": "Enviado"
-  }
-  ```
-
-
-  Consulta la UI de Swagger para ver todos los endpoints y modelos.
-
-  ---
-
-  ## 🛠️ Inicializar admin (temporal)
-
-  Si necesitas crear el usuario `admin` en producción sin ejecutar scripts en la BD, el proyecto incluye un endpoint temporal protegido por secreto:
-
-  - `POST /api/auth/init-admin`
-    - Header: `X-Admin-Secret: <valor_de_APP_ADMIN_INIT_SECRET>`
-    - Requiere que la variable de entorno `APP_ADMIN_INIT_SECRET` esté configurada en Render.
-
-  Alternativa: activar `APP_DATA_INIT_ENABLED=true` (si `DataInitializer` crea el admin automáticamente). Usar con precaución.
-
-  ---
-
-  ## 🌐 CORS
-
-  - Variable en producción: `APP_CORS_ALLOWED_ORIGINS` (lista separada por comas). Ejemplo:
-
-  ```
-  APP_CORS_ALLOWED_ORIGINS=https://tienda-mi-mascota.vercel.app,http://localhost:3000
-  ```
-
-  - La configuración actual admite patrones (`allowedOriginPatterns`) para permitir subdominios `*.vercel.app`.
-
-  ---
-
-  ## 🐳 Docker (opcional)
-
-  - Construir imagen:
-
-  ```bash
-  docker build -t tienda-mascota-backend:local .
-  ```
-
-  - Ejecutar contenedor (ejemplo):
-
-  ```bash
-  docker run --rm -p 8080:8080 -e SPRING_PROFILES_ACTIVE=local -e APP_CORS_ALLOWED_ORIGINS=http://localhost:3000 tienda-mascota-backend:local
-  ```
-
-  ---
-
-  ## ✅ Verificaciones útiles
-
-  - ¿Swagger carga en producción?  -> `https://tiendamimascotabackends.onrender.com/api/swagger-ui/index.html`
-  - ¿OpenAPI JSON accesible? -> `https://tiendamimascotabackends.onrender.com/api/v3/api-docs`
-  - ¿Frontend recibe errores CORS? -> Revisa `APP_CORS_ALLOWED_ORIGINS` en Render y que `allowCredentials=true` combine con `allowedOriginPatterns` (no usar `*` cuando `allowCredentials=true`).
-
-  ---
-
-  ## 📂 Estructura del proyecto (resumen)
-
-  ```
-  src/main/java/com/tiendamascota
-    ├─ config/ (Cors, Security, DataInitializer)
-    ├─ controller/ (Auth, Producto, Orden, Usuario)
-    ├─ dto/
-    ├─ model/
-    ├─ repository/
-    └─ service/
-  ```
-
-  ---
-
-  ## 📞 Soporte / próximos pasos
-
-  Si quieres que:
-  - limite el acceso a Swagger por `ROLE_ADMIN` → escribo el patch en `SecurityConfig`.
-  - añada un ejemplo `settings.xml` para `mvn deploy` → lo genero.
-  - prepare un script de deploy para Render con instrucciones paso a paso → lo escribo.
-
-  Indica cuál de las tareas prefieres y la implemento.
-
-  ---
-
-  **Tienda Mi Mascota — Backend**
-
-  *** End Replacement ***
+Tienda Mi Mascota — Backend
