@@ -255,6 +255,33 @@ curl -X POST http://localhost:8080/api/auth/login \
   - `POST /api/ordenes` — Crear orden
   - `POST /api/productos/verificar-stock` — Verificar stock
 
+  ### **Admin - Órdenes**
+
+  - `GET /api/ordenes?page=0&size=20` — Listar órdenes (admin). Parámetros opcionales:
+    - `usuarioId` (Long): filtra órdenes por ID de usuario.
+    - `email` (String): filtra órdenes por email del usuario.
+    - `estado` (String): filtra por estado (ej. "pendiente", "enviado", "entregado").
+    - `page` y `size`: paginación.
+
+  - `GET /api/ordenes/{id}` — Obtener orden detallada (incluye items y datos de envío).
+  - `PUT /api/ordenes/{id}` — Actualizar estado y datos de envío de la orden (admin).
+
+  Ejemplo: obtener la primera página de órdenes del usuario con email `cliente@correo.com`:
+
+  ```cmd
+  curl -i "http://localhost:8080/api/ordenes?page=0&size=20&email=cliente@correo.com" \
+    -H "Authorization: Bearer <TOKEN_ADMIN>"
+  ```
+
+  Para cambiar el estado desde Swagger UI o la app frontend, usar `PUT /api/ordenes/{id}` con un body JSON que contenga al menos el campo `estado`:
+
+  ```json
+  {
+    "estado": "Enviado"
+  }
+  ```
+
+
   Consulta la UI de Swagger para ver todos los endpoints y modelos.
 
   ---

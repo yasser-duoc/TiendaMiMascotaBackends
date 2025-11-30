@@ -41,6 +41,8 @@ public class OrdenController {
     private OrdenService ordenService;
     @Autowired
     private OrdenRepository ordenRepository;
+    @Autowired
+    private com.tiendamascota.repository.UsuarioRepository usuarioRepository;
     
     /**
      * Verificar disponibilidad de stock
@@ -117,10 +119,60 @@ public class OrdenController {
         @ApiResponse(responseCode = "200", description = "Listado de órdenes", content = @Content(mediaType = "application/json")),
         @ApiResponse(responseCode = "500", description = "Error interno", content = @Content)
     })
-    public ResponseEntity<?> listarTodas() {
+    public ResponseEntity<?> listarTodas(
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "0") int page,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "20") int size,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) Long usuarioId,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) String email,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) String estado
+    ) {
         try {
-            List<Orden> ordenes = ordenRepository.findAllWithItems();
-            return ResponseEntity.ok(ordenes);
+            org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, org.springframework.data.domain.Sort.by("fecha").descending());
+
+            org.springframework.data.domain.Page<Orden> ordenPage;
+
+            if (usuarioId != null) {
+                if (estado != null && !estado.isBlank()) {
+                    ordenPage = ordenRepository.findByUsuarioIdAndEstadoOrderByFechaDesc(usuarioId, estado, pageable);
+                } else {
+                    ordenPage = ordenRepository.findByUsuarioIdOrderByFechaDesc(usuarioId, pageable);
+                }
+            } else if (email != null && !email.isBlank()) {
+                // Buscar usuario por email y luego filtrar por usuarioId
+                java.util.Optional<com.tiendamascota.model.Usuario> usuario = usuarioRepository.findByEmail(email);
+
+                if (usuario.isPresent()) {
+                    Long uid = usuario.get().getUsuario_id().longValue();
+                    if (estado != null && !estado.isBlank()) {
+                        ordenPage = ordenRepository.findByUsuarioIdAndEstadoOrderByFechaDesc(uid, estado, pageable);
+                    } else {
+                        ordenPage = ordenRepository.findByUsuarioIdOrderByFechaDesc(uid, pageable);
+                    }
+                } else {
+                    ordenPage = org.springframework.data.domain.Page.empty(pageable);
+                }
+            } else if (estado != null && !estado.isBlank()) {
+                ordenPage = ordenRepository.findByEstadoOrderByFechaDesc(estado, pageable);
+            } else {
+                ordenPage = ordenRepository.findAll(pageable);
+            }
+
+            // Cargar items para cada orden (evitar problemas de LazyInitialization fuera del contexto)
+            java.util.List<Orden> content = ordenPage.getContent();
+            java.util.List<Orden> enriched = new java.util.ArrayList<>();
+            for (Orden o : content) {
+                java.util.Optional<Orden> full = ordenRepository.findByIdWithItems(o.getId());
+                enriched.add(full.orElse(o));
+            }
+
+            java.util.Map<String, Object> result = new java.util.HashMap<>();
+            result.put("content", enriched);
+            result.put("page", ordenPage.getNumber());
+            result.put("size", ordenPage.getSize());
+            result.put("totalElements", ordenPage.getTotalElements());
+            result.put("totalPages", ordenPage.getTotalPages());
+
+            return ResponseEntity.ok(result);
         } catch (Exception e) {
             Map<String, Object> error = new HashMap<>();
             error.put("mensaje", "Error al listar órdenes: " + e.getMessage());
