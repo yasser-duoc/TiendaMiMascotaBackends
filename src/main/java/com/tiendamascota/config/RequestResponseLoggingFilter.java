@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.core.annotation.Order;
+import org.springframework.core.Ordered;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.ContentCachingRequestWrapper;
 import org.springframework.web.util.ContentCachingResponseWrapper;
@@ -24,6 +26,7 @@ import java.util.List;
 import java.util.Set;
 
 @Component
+@Order(Ordered.HIGHEST_PRECEDENCE + 10)
 public class RequestResponseLoggingFilter extends OncePerRequestFilter {
 
     private static final Logger logger = LoggerFactory.getLogger(RequestResponseLoggingFilter.class);
