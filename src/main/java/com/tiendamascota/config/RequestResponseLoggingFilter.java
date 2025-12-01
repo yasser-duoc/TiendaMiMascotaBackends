@@ -17,6 +17,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -70,12 +71,35 @@ public class RequestResponseLoggingFilter extends OncePerRequestFilter {
             String rawRequestBody = getPayload(wrappedRequest.getContentAsByteArray(), wrappedRequest.getCharacterEncoding());
             String rawResponseBody = getPayload(wrappedResponse.getContentAsByteArray(), wrappedResponse.getCharacterEncoding());
 
-            String requestBody = shouldLogBody ? tryRedactJson(rawRequestBody) : "[excluded]";
-            // para respuestas, si el tipo de contenido es binario o multipart, lo excluimos
-            String responseBody = (!isBinaryOrMultipart(wrappedResponse.getContentType()) && shouldLogBody) ? tryRedactJson(rawResponseBody) : "[excluded]";
+                String requestBody = shouldLogBody ? tryRedactJson(rawRequestBody) : "[excluded]";
+                // para respuestas, si el tipo de contenido es binario o multipart, lo excluimos
+                String responseBody = (!isBinaryOrMultipart(wrappedResponse.getContentType()) && shouldLogBody) ? tryRedactJson(rawResponseBody) : "[excluded]";
 
-            logger.info("HTTP {} {} from {} => status={} time={}ms requestBody={} responseBody={}",
-                    method, path, client, status, duration, truncate(requestBody), truncate(responseBody));
+                // Log estructurado JSON: siempre emitimos metadatos; bodies estarán
+                // incluidos (truncados) solo si `shouldLogBody`.
+                try {
+                    var logNode = OBJECT_MAPPER.createObjectNode();
+                    logNode.put("timestamp", Instant.now().toString());
+                    logNode.put("method", method);
+                    logNode.put("path", path);
+                    logNode.put("client", client);
+                    logNode.put("status", status);
+                    logNode.put("durationMs", duration);
+
+                    if (shouldLogBody) {
+                        logNode.put("requestBody", truncate(requestBody));
+                        logNode.put("responseBody", truncate(responseBody));
+                    } else {
+                        logNode.put("requestBody", "[excluded]");
+                        logNode.put("responseBody", "[excluded]");
+                    }
+
+                    logger.info(OBJECT_MAPPER.writeValueAsString(logNode));
+                } catch (Exception e) {
+                    // Fallback simple en caso de error serializando JSON
+                    logger.info("HTTP {} {} from {} => status={} time={}ms requestBody={} responseBody={}",
+                            method, path, client, status, duration, truncate(requestBody), truncate(responseBody));
+                }
 
             wrappedResponse.copyBodyToResponse();
         }
