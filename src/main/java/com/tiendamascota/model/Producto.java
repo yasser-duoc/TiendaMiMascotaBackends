@@ -44,6 +44,7 @@ public class Producto {
     @Column(nullable = false)
     private String category;
     
+    @Column(columnDefinition = "LONGTEXT")
     private String imageUrl;
     
     // Campos para React (Web)
