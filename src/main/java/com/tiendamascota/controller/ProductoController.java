@@ -58,10 +58,28 @@ public class ProductoController {
     public ResponseEntity<List<Producto>> obtenerTodos() {
         try {
             List<Producto> productos = productoRepository.findAll();
+            
+            // DEBUG: Log detallado de cada producto
+            System.out.println("=== [GET /productos] INICIO ===");
+            System.out.println("[GET /productos] Total productos en BD: " + productos.size());
+            
+            for (Producto p : productos) {
+                String imageInfo = "null";
+                if (p.getImageUrl() != null) {
+                    imageInfo = p.getImageUrl().length() > 100 
+                        ? "Base64 (" + p.getImageUrl().length() + " chars)" 
+                        : p.getImageUrl();
+                }
+                System.out.println("[GET /productos] ID=" + p.getId() + 
+                    ", Nombre=" + p.getNombre() + 
+                    ", ImageUrl=" + imageInfo);
+            }
+            System.out.println("=== [GET /productos] Enviando " + productos.size() + " productos ===");
+            
             // Devolver productos SIN modificar las URLs - el cliente maneja Base64 directamente
             return ResponseEntity.ok(productos);
         } catch (Exception e) {
-            System.err.println("[GET /productos] Error: " + e.getMessage());
+            System.err.println("[GET /productos] ERROR: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
