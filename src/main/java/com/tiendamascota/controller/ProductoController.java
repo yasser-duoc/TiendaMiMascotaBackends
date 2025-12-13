@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.tiendamascota.config.ImageMappingsProperties;
 import com.tiendamascota.dto.ProductoRequest;
@@ -59,31 +58,7 @@ public class ProductoController {
     public ResponseEntity<List<Producto>> obtenerTodos() {
         try {
             List<Producto> productos = productoRepository.findAll();
-            // Normalizar/Resolver URLs de imagen (devuelven URL absolutas para clientes)
-            String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
-            
-            // DEBUG: Log para verificar las URLs antes y después de procesar
-            for (Producto p : productos) {
-                String originalUrl = p.getImageUrl();
-                boolean isBase64 = originalUrl != null && originalUrl.toLowerCase().startsWith("data:");
-                
-                if (isBase64) {
-                    System.out.println("[GET /productos] Producto ID=" + p.getId() + 
-                        " tiene Base64 (length=" + originalUrl.length() + 
-                        ", prefix=" + originalUrl.substring(0, Math.min(50, originalUrl.length())) + "...)");
-                }
-                
-                p.setImageUrl(resolveImageUrl(p, baseUrl));
-                
-                // Verificar que la URL no cambió para Base64
-                if (isBase64) {
-                    String newUrl = p.getImageUrl();
-                    boolean stillBase64 = newUrl != null && newUrl.toLowerCase().startsWith("data:");
-                    System.out.println("[GET /productos] Después de resolveImageUrl: stillBase64=" + stillBase64 + 
-                        ", newLength=" + (newUrl != null ? newUrl.length() : 0));
-                }
-            }
-            
+            // Devolver productos SIN modificar las URLs - el cliente maneja Base64 directamente
             return ResponseEntity.ok(productos);
         } catch (Exception e) {
             System.err.println("[GET /productos] Error: " + e.getMessage());
@@ -104,8 +79,7 @@ public class ProductoController {
             var producto = productoRepository.findById(java.util.Objects.requireNonNull(id));
             
             if (producto.isPresent()) {
-                String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
-                producto.get().setImageUrl(resolveImageUrl(producto.get(), baseUrl));
+                // Devolver producto SIN modificar la URL - el cliente maneja Base64 directamente
                 return ResponseEntity.ok(producto.get());
             } else {
                 Map<String, Object> error = new HashMap<>();
@@ -125,8 +99,7 @@ public class ProductoController {
     @Operation(summary = "Obtener productos por categoría", description = "Retorna todos los productos de una categoría específica")
     public ResponseEntity<List<Producto>> obtenerPorCategoria(@PathVariable String categoria) {
         List<Producto> productos = productoRepository.findByCategory(categoria);
-        String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
-        productos.forEach(p -> p.setImageUrl(resolveImageUrl(p, baseUrl)));
+        // Devolver productos SIN modificar las URLs - el cliente maneja Base64 directamente
         return ResponseEntity.ok(productos);
     }
 
