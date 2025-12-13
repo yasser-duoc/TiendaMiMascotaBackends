@@ -61,9 +61,33 @@ public class ProductoController {
             List<Producto> productos = productoRepository.findAll();
             // Normalizar/Resolver URLs de imagen (devuelven URL absolutas para clientes)
             String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
-            productos.forEach(p -> p.setImageUrl(resolveImageUrl(p, baseUrl)));
+            
+            // DEBUG: Log para verificar las URLs antes y después de procesar
+            for (Producto p : productos) {
+                String originalUrl = p.getImageUrl();
+                boolean isBase64 = originalUrl != null && originalUrl.toLowerCase().startsWith("data:");
+                
+                if (isBase64) {
+                    System.out.println("[GET /productos] Producto ID=" + p.getId() + 
+                        " tiene Base64 (length=" + originalUrl.length() + 
+                        ", prefix=" + originalUrl.substring(0, Math.min(50, originalUrl.length())) + "...)");
+                }
+                
+                p.setImageUrl(resolveImageUrl(p, baseUrl));
+                
+                // Verificar que la URL no cambió para Base64
+                if (isBase64) {
+                    String newUrl = p.getImageUrl();
+                    boolean stillBase64 = newUrl != null && newUrl.toLowerCase().startsWith("data:");
+                    System.out.println("[GET /productos] Después de resolveImageUrl: stillBase64=" + stillBase64 + 
+                        ", newLength=" + (newUrl != null ? newUrl.length() : 0));
+                }
+            }
+            
             return ResponseEntity.ok(productos);
         } catch (Exception e) {
+            System.err.println("[GET /productos] Error: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
@@ -165,9 +189,13 @@ public class ProductoController {
         // Limpiar espacios al inicio/final
         original = original.trim();
         
-        // Si es Base64 (Data URI), devolverlo tal cual sin procesar
+        // IMPORTANTE: Si es Base64 (Data URI), devolverlo INMEDIATAMENTE tal cual sin ningún procesamiento
         // Formato: data:[<mediatype>][;base64],<data>
-        if (original.startsWith("data:")) {
+        // También verificamos variaciones como "DATA:" (mayúsculas) por seguridad
+        if (original.toLowerCase().startsWith("data:")) {
+            // Log para debug (remover en producción si es necesario)
+            System.out.println("[resolveImageUrl] Producto ID=" + producto.getId() + 
+                " tiene imagen Base64 (length=" + original.length() + "), devolviendo sin modificar");
             return original;
         }
 
@@ -307,6 +335,57 @@ public class ProductoController {
             Map<String, Object> error = new HashMap<>();
             error.put("mensaje", "Error al limpiar duplicados: " + e.getMessage());
             error.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+    
+    /**
+     * ENDPOINT DEBUG - Devuelve los productos TAL CUAL están en la BD sin ningún procesamiento
+     * Útil para diagnosticar si el problema está en la BD o en el procesamiento de URLs
+     */
+    @GetMapping("/debug/raw")
+    @Operation(summary = "DEBUG: Obtener productos sin procesar", description = "Devuelve productos directamente de la BD sin resolver URLs")
+    public ResponseEntity<?> obtenerTodosRaw() {
+        try {
+            List<Producto> productos = productoRepository.findAll();
+            
+            // Crear un resumen de cada producto para debug
+            List<Map<String, Object>> debugInfo = new java.util.ArrayList<>();
+            for (Producto p : productos) {
+                Map<String, Object> info = new HashMap<>();
+                info.put("id", p.getId());
+                info.put("nombre", p.getNombre());
+                
+                String imageUrl = p.getImageUrl();
+                if (imageUrl == null) {
+                    info.put("imageUrl", null);
+                    info.put("imageUrlType", "NULL");
+                    info.put("imageUrlLength", 0);
+                } else if (imageUrl.toLowerCase().startsWith("data:")) {
+                    info.put("imageUrlType", "BASE64");
+                    info.put("imageUrlLength", imageUrl.length());
+                    // Solo mostrar los primeros 100 caracteres del Base64 para no saturar
+                    info.put("imageUrlPreview", imageUrl.substring(0, Math.min(100, imageUrl.length())) + "...[truncated]");
+                    // Devolver la URL completa también
+                    info.put("imageUrl", imageUrl);
+                } else {
+                    info.put("imageUrlType", "URL");
+                    info.put("imageUrlLength", imageUrl.length());
+                    info.put("imageUrl", imageUrl);
+                }
+                
+                debugInfo.add(info);
+            }
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("totalProductos", productos.size());
+            response.put("productos", debugInfo);
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("mensaje", "Error: " + e.getMessage());
+            error.put("stackTrace", e.toString());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
