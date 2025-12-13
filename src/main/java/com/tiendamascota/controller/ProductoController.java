@@ -3,9 +3,12 @@ package com.tiendamascota.controller;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tiendamascota.config.ImageMappingsProperties;
 import com.tiendamascota.dto.ProductoRequest;
 import com.tiendamascota.dto.VerificarStockRequest;
@@ -48,6 +52,9 @@ public class ProductoController {
     @Autowired(required = false)
     private ImagenService imagenService;
     
+    @Autowired
+    private ObjectMapper objectMapper;
+    
     
     @GetMapping
     @Operation(summary = "Obtener todos los productos", description = "Retorna una lista de todos los productos")
@@ -64,6 +71,7 @@ public class ProductoController {
             System.out.println("[GET /productos] Total productos en BD: " + productos.size());
             
             int base64Count = 0;
+            StringBuilder idsEnviados = new StringBuilder();
             for (Producto p : productos) {
                 String imageInfo = "null";
                 if (p.getImageUrl() != null) {
@@ -79,16 +87,88 @@ public class ProductoController {
                 System.out.println("[GET /productos] ID=" + p.getId() + 
                     ", Nombre=" + p.getNombre() + 
                     ", ImageUrl=" + imageInfo);
+                idsEnviados.append(p.getId()).append(",");
             }
             System.out.println("[GET /productos] Productos con Base64: " + base64Count);
+            
+            // DEBUG: Verificar serialización antes de enviar
+            try {
+                String jsonTest = objectMapper.writeValueAsString(productos);
+                int idsEnJson = 0;
+                int idx = 0;
+                while ((idx = jsonTest.indexOf("\"producto_id\":", idx)) != -1) {
+                    idsEnJson++;
+                    idx++;
+                }
+                System.out.println("[GET /productos] ✓ Pre-serialización OK: " + jsonTest.length() + " bytes, " + idsEnJson + " productos en JSON");
+                
+                if (idsEnJson != productos.size()) {
+                    System.err.println("[GET /productos] ⚠️ ALERTA: Diferencia entre BD (" + productos.size() + ") y JSON (" + idsEnJson + ")!");
+                }
+            } catch (Exception serEx) {
+                System.err.println("[GET /productos] ⚠️ ERROR en pre-serialización: " + serEx.getMessage());
+            }
+            
             System.out.println("=== [GET /productos] Enviando " + productos.size() + " productos ===");
             
-            // Devolver productos SIN modificar las URLs - el cliente maneja Base64 directamente
-            return ResponseEntity.ok(productos);
+            // Agregar headers de debug
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("X-Total-Products", String.valueOf(productos.size()));
+            headers.set("X-Base64-Products", String.valueOf(base64Count));
+            headers.set("X-Product-IDs", idsEnviados.toString());
+            
+            return ResponseEntity.ok()
+                .headers(headers)
+                .body(productos);
         } catch (Exception e) {
             System.err.println("[GET /productos] ERROR: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+    
+    /**
+     * Endpoint alternativo que serializa explícitamente la lista de productos.
+     * Usar para diagnóstico: compara este resultado con GET /productos
+     */
+    @GetMapping(value = "/lista-debug", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Lista de productos (debug)", description = "Serialización manual para diagnóstico")
+    public ResponseEntity<String> obtenerTodosDebug() {
+        try {
+            List<Producto> productos = productoRepository.findAll();
+            
+            System.out.println("[GET /productos/lista-debug] Serializando " + productos.size() + " productos manualmente...");
+            
+            // Serializar manualmente con el ObjectMapper configurado
+            String json = objectMapper.writeValueAsString(productos);
+            
+            // Verificar integridad
+            List<Integer> idsEsperados = productos.stream().map(Producto::getId).collect(Collectors.toList());
+            List<Integer> idsFaltantes = new java.util.ArrayList<>();
+            
+            for (Integer id : idsEsperados) {
+                if (!json.contains("\"producto_id\":" + id)) {
+                    idsFaltantes.add(id);
+                    System.err.println("[GET /productos/lista-debug] ⚠️ ID " + id + " NO está en el JSON serializado!");
+                }
+            }
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("X-Total-Products", String.valueOf(productos.size()));
+            headers.set("X-JSON-Length", String.valueOf(json.length()));
+            headers.set("X-Missing-IDs", idsFaltantes.isEmpty() ? "none" : idsFaltantes.toString());
+            
+            System.out.println("[GET /productos/lista-debug] ✓ JSON generado: " + json.length() + " bytes");
+            
+            return new ResponseEntity<>(json, headers, HttpStatus.OK);
+            
+        } catch (Exception e) {
+            System.err.println("[GET /productos/lista-debug] ERROR: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body("{\"error\": \"" + e.getMessage().replace("\"", "'") + "\"}");
         }
     }
     

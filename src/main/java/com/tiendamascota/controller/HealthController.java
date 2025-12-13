@@ -1,12 +1,15 @@
 package com.tiendamascota.controller;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -23,6 +26,134 @@ public class HealthController {
     
     @Autowired
     private ObjectMapper objectMapper;
+    
+    /**
+     * DEBUG: Endpoint que serializa manualmente y devuelve el JSON raw
+     * para comparar con lo que recibe Android
+     */
+    @GetMapping(value = "/health/productos-raw", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> productosRaw() {
+        try {
+            List<Producto> productos = productoRepository.findAll();
+            
+            System.out.println("=== [/health/productos-raw] Serializando " + productos.size() + " productos ===");
+            
+            // Log cada producto antes de serializar
+            for (Producto p : productos) {
+                String imgInfo = p.getImageUrl() == null ? "NULL" :
+                    (p.getImageUrl().startsWith("data:") ? "BASE64[" + p.getImageUrl().length() + "]" : "URL");
+                System.out.println("  -> ID=" + p.getId() + " | " + p.getNombre() + " | img=" + imgInfo);
+            }
+            
+            // Serializar manualmente con el ObjectMapper configurado
+            String json = objectMapper.writeValueAsString(productos);
+            
+            System.out.println("[/health/productos-raw] JSON generado: " + json.length() + " bytes");
+            System.out.println("[/health/productos-raw] Primeros 500 chars: " + json.substring(0, Math.min(500, json.length())));
+            
+            // Verificar que todos los IDs estén en el JSON
+            for (Producto p : productos) {
+                String idCheck = "\"producto_id\":" + p.getId();
+                if (!json.contains(idCheck)) {
+                    System.err.println("[/health/productos-raw] ⚠️ PRODUCTO ID=" + p.getId() + " NO ENCONTRADO EN JSON!");
+                }
+            }
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("X-Total-Products", String.valueOf(productos.size()));
+            headers.set("X-JSON-Length", String.valueOf(json.length()));
+            
+            return new ResponseEntity<>(json, headers, HttpStatus.OK);
+            
+        } catch (Exception e) {
+            System.err.println("[/health/productos-raw] ERROR: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("{\"error\": \"" + e.getMessage().replace("\"", "'") + "\"}");
+        }
+    }
+    
+    /**
+     * DEBUG: Analiza cada producto individualmente para detectar cuál falla
+     */
+    @GetMapping("/health/productos-analisis")
+    public ResponseEntity<Map<String, Object>> productosAnalisis() {
+        Map<String, Object> result = new HashMap<>();
+        result.put("timestamp", Instant.now().toString());
+        
+        try {
+            List<Producto> productos = productoRepository.findAll();
+            result.put("totalEnBD", productos.size());
+            
+            List<Map<String, Object>> analisis = new ArrayList<>();
+            List<Integer> idsConError = new ArrayList<>();
+            List<Integer> idsConBase64 = new ArrayList<>();
+            int serializadosOk = 0;
+            
+            for (Producto p : productos) {
+                Map<String, Object> pAnalisis = new HashMap<>();
+                pAnalisis.put("id", p.getId());
+                pAnalisis.put("nombre", p.getNombre());
+                pAnalisis.put("category", p.getCategory());
+                
+                boolean esBase64 = p.getImageUrl() != null && p.getImageUrl().startsWith("data:");
+                pAnalisis.put("esBase64", esBase64);
+                pAnalisis.put("imageUrlLength", p.getImageUrl() != null ? p.getImageUrl().length() : 0);
+                
+                if (esBase64) {
+                    idsConBase64.add(p.getId());
+                }
+                
+                // Intentar serializar este producto individualmente
+                try {
+                    String jsonIndividual = objectMapper.writeValueAsString(p);
+                    pAnalisis.put("serializaOk", true);
+                    pAnalisis.put("jsonLength", jsonIndividual.length());
+                    serializadosOk++;
+                } catch (Exception serEx) {
+                    pAnalisis.put("serializaOk", false);
+                    pAnalisis.put("errorSerializacion", serEx.getMessage());
+                    idsConError.add(p.getId());
+                }
+                
+                analisis.add(pAnalisis);
+            }
+            
+            result.put("serializadosOk", serializadosOk);
+            result.put("idsConError", idsConError);
+            result.put("idsConBase64", idsConBase64);
+            result.put("productosAnalisis", analisis);
+            
+            // Intentar serializar toda la lista
+            try {
+                String jsonCompleto = objectMapper.writeValueAsString(productos);
+                result.put("listaCompletaSerializaOk", true);
+                result.put("jsonCompletoLength", jsonCompleto.length());
+                
+                // Contar cuántos producto_id hay en el JSON
+                int countIds = 0;
+                int idx = 0;
+                while ((idx = jsonCompleto.indexOf("\"producto_id\":", idx)) != -1) {
+                    countIds++;
+                    idx++;
+                }
+                result.put("productosEnJson", countIds);
+                
+            } catch (Exception listEx) {
+                result.put("listaCompletaSerializaOk", false);
+                result.put("errorListaCompleta", listEx.getMessage());
+            }
+            
+            result.put("status", idsConError.isEmpty() ? "OK" : "HAY_ERRORES");
+            return ResponseEntity.ok(result);
+            
+        } catch (Exception e) {
+            result.put("status", "ERROR");
+            result.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result);
+        }
+    }
 
     @GetMapping("/health")
     public ResponseEntity<Map<String, Object>> health() {
