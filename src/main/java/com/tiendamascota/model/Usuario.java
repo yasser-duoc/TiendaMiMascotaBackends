@@ -7,6 +7,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -36,6 +37,8 @@ public class Usuario {
     private String direccion;
     private String run;
     
+    // @Lob permite almacenar imágenes base64 largas (foto de perfil)
+    @Lob
     @Column(columnDefinition = "LONGTEXT")
     private String fotoUrl;
     

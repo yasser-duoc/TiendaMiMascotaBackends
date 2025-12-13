@@ -10,6 +10,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
@@ -32,6 +33,9 @@ public class OrdenItem {
     
     private String productoNombre;
     
+    // @Lob permite almacenar imágenes base64 largas
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
     private String productoImagen;
     
     @Column(nullable = false)
