@@ -146,6 +146,7 @@ public class ProductoController {
 
     /**
      * Resuelve la URL final de la imagen para un producto.
+     * - Si es una imagen Base64, la devuelve tal cual sin modificar.
      * - Si existe un mapeo (por id o por slug de nombre) lo usa.
      * - Si la URL original proviene de Unsplash y no hay mapeo, usa default si está configurado.
      * - En otros casos aplica `normalizeImageUrl`.
@@ -153,6 +154,11 @@ public class ProductoController {
     private String resolveImageUrl(Producto producto, String baseUrl) {
         String original = producto.getImageUrl();
         if (original == null) return null;
+        
+        // Si es Base64, devolverlo tal cual sin procesar
+        if (original.startsWith("data:image/")) {
+            return original;
+        }
 
         // 1) Intentar mapeo por ID
         if (producto.getId() != null && imageMappingsProperties != null && imageMappingsProperties.getMappings() != null) {
