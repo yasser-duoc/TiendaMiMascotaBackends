@@ -63,17 +63,24 @@ public class ProductoController {
             System.out.println("=== [GET /productos] INICIO ===");
             System.out.println("[GET /productos] Total productos en BD: " + productos.size());
             
+            int base64Count = 0;
             for (Producto p : productos) {
                 String imageInfo = "null";
                 if (p.getImageUrl() != null) {
-                    imageInfo = p.getImageUrl().length() > 100 
-                        ? "Base64 (" + p.getImageUrl().length() + " chars)" 
-                        : p.getImageUrl();
+                    if (p.getImageUrl().startsWith("data:")) {
+                        imageInfo = "BASE64 (" + p.getImageUrl().length() + " chars)";
+                        base64Count++;
+                    } else {
+                        imageInfo = p.getImageUrl().length() > 100 
+                            ? "URL (" + p.getImageUrl().length() + " chars)" 
+                            : p.getImageUrl();
+                    }
                 }
                 System.out.println("[GET /productos] ID=" + p.getId() + 
                     ", Nombre=" + p.getNombre() + 
                     ", ImageUrl=" + imageInfo);
             }
+            System.out.println("[GET /productos] Productos con Base64: " + base64Count);
             System.out.println("=== [GET /productos] Enviando " + productos.size() + " productos ===");
             
             // Devolver productos SIN modificar las URLs - el cliente maneja Base64 directamente
