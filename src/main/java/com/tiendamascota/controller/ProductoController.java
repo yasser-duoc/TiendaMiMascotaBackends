@@ -108,6 +108,7 @@ public class ProductoController {
 
     /**
      * Normaliza la url de imagen que pueden venir en distintos formatos:
+     * - Data URIs (Base64) -> se devuelven tal cual sin modificar
      * - Relativas ("/images/..") -> prefix con baseUrl (por ej. https://miapp)
      * - http:// -> https:// para evitar mixed-content
      * - urls sin esquema -> prefija https://
@@ -115,6 +116,12 @@ public class ProductoController {
     private String normalizeImageUrl(String url, String baseUrl) {
         if (url == null || url.isBlank()) return url;
         url = url.trim();
+
+        // IMPORTANTE: Las Data URIs (Base64) se devuelven tal cual sin modificar
+        // Formato: data:[<mediatype>][;base64],<data>
+        if (url.startsWith("data:")) {
+            return url;
+        }
 
         // Relativas: /images/abc.jpg
         if (url.startsWith("/")) {
@@ -136,8 +143,8 @@ public class ProductoController {
             return url.replaceFirst("http://", "https://");
         }
 
-        // Si no empieza con esquema, asume https
-        if (!url.matches("^[a-zA-Z][a-zA-Z0-9+.-]*://.*")) {
+        // Si no empieza con esquema válido (http, https, data, etc.), asume https
+        if (!url.matches("^[a-zA-Z][a-zA-Z0-9+.-]*:.*")) {
             return "https://" + url;
         }
 
@@ -146,7 +153,7 @@ public class ProductoController {
 
     /**
      * Resuelve la URL final de la imagen para un producto.
-     * - Si es una imagen Base64, la devuelve tal cual sin modificar.
+     * - Si es una imagen Base64 (Data URI), la devuelve tal cual sin modificar.
      * - Si existe un mapeo (por id o por slug de nombre) lo usa.
      * - Si la URL original proviene de Unsplash y no hay mapeo, usa default si está configurado.
      * - En otros casos aplica `normalizeImageUrl`.
@@ -155,8 +162,12 @@ public class ProductoController {
         String original = producto.getImageUrl();
         if (original == null) return null;
         
-        // Si es Base64, devolverlo tal cual sin procesar
-        if (original.startsWith("data:image/")) {
+        // Limpiar espacios al inicio/final
+        original = original.trim();
+        
+        // Si es Base64 (Data URI), devolverlo tal cual sin procesar
+        // Formato: data:[<mediatype>][;base64],<data>
+        if (original.startsWith("data:")) {
             return original;
         }
 
